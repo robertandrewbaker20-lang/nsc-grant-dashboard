@@ -2,9 +2,6 @@ import Link from "next/link";
 
 export function AppHeader({ active }: { active: "results" | "parameters" }) {
   const tab = "rounded-full px-4 py-1.5 text-sm font-black no-underline transition";
-  const on = "bg-[#ce202a] text-black shadow-[0_0_0_2px_#ce202a]";
-  const off =
-    "border-2 border-[#ce202a] bg-[#ce202a] text-black hover:brightness-95";
 
   return (
     <header className="sticky top-0 z-30 border-b-4 border-[#ce202a] bg-white/90 shadow-sm backdrop-blur-xl">
@@ -21,12 +18,19 @@ export function AppHeader({ active }: { active: "results" | "parameters" }) {
           </div>
         </div>
         <nav className="flex flex-wrap items-center gap-2">
-          <Link href="/" className={`${tab} ${active === "results" ? on : off}`}>
+          <Link
+            href="/"
+            className={`${tab} ${
+              active === "results"
+                ? "bg-[#255097] text-white"
+                : "border-2 border-[#255097] bg-white text-[#255097]"
+            }`}
+          >
             Portfolio
           </Link>
           <Link
             href="/parameters"
-            className={`${tab} ${active === "parameters" ? on : off}`}
+            className={`${tab} border-2 border-black bg-[#ce202a] text-black`}
           >
             Search parameters
           </Link>
@@ -34,7 +38,7 @@ export function AppHeader({ active }: { active: "results" | "parameters" }) {
             href="https://www.naturalstatecouncil.org/"
             target="_blank"
             rel="noreferrer"
-            className="rounded-full border-2 border-[#ce202a] bg-[#ce202a] px-3 py-1.5 text-sm font-black text-black no-underline hover:brightness-95"
+            className="rounded-full border-2 border-[#ce202a] bg-white px-3 py-1.5 text-sm font-black text-[#ce202a] no-underline hover:bg-[#ce202a] hover:text-black"
           >
             naturalstatecouncil.org
           </a>

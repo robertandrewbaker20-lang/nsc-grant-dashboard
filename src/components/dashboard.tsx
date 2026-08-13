@@ -46,8 +46,10 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
     const storedResult = readStoredResult();
     if (storedResult) {
       setResult(storedResult);
+      writeStoredResult(storedResult);
+      const hid = storedResult.errors.find((e) => e.startsWith("Hid "));
       setStatus(
-        `Last scan ${new Date(storedResult.searchedAt).toLocaleString()} · ${storedResult.fetched} listings`,
+        `Last scan ${new Date(storedResult.searchedAt).toLocaleString()} · ${storedResult.fetched} listings${hid ? ` · ${hid}` : ""}`,
       );
     }
   }, []);
@@ -158,6 +160,8 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
             <p className="mt-2 max-w-2xl text-sm text-[#5b6573]">
               Drag cards between Review, Pursue, and Pass. Open a card for the
               briefing, then use the application website to go to the funder.
+              Site-specific awards outside Arkansas (for example Wright-Patterson
+              STARBASE) are hidden.
             </p>
           </div>
           <button
@@ -257,7 +261,9 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
                       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold">
                         <span className="capitalize">{row.funderType}</span>
                         <span>{formatDeadline(row.deadline)}</span>
-                        {row.fitScore != null && <span>Fit {row.fitScore}</span>}
+                        <span>
+                          {row.fitScore != null ? `Fit ${row.fitScore}` : "Not scored"}
+                        </span>
                       </div>
                       {row.url && (
                         <a

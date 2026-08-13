@@ -1,3 +1,4 @@
+import { filterEligibleOpportunities } from "./eligibility";
 import type { Opportunity, SearchProfile, SearchResult } from "./types";
 import { blankDetails } from "./types";
 
@@ -37,9 +38,21 @@ export function readStoredResult(): SearchResult | null {
     const raw = window.sessionStorage.getItem(RESULT_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as SearchResult;
+    const { kept, dropped } = filterEligibleOpportunities(
+      (parsed.opportunities ?? []).map(normalizeOpportunity),
+    );
     return {
       ...parsed,
-      opportunities: (parsed.opportunities ?? []).map(normalizeOpportunity),
+      opportunities: kept,
+      fetched: kept.length,
+      errors: [
+        ...(parsed.errors ?? []),
+        ...(dropped
+          ? [
+              `Hid ${dropped} listing${dropped === 1 ? "" : "s"} that cannot fund Arkansas work (other-state or site-specific, including Wright-Patterson / STARBASE).`,
+            ]
+          : []),
+      ],
     };
   } catch {
     return null;
