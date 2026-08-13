@@ -142,16 +142,36 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
       setNotes(publicNotes(federal.errors));
 
       try {
-        const complete = await postSearch({
+        setStatus(
+          federal.fetched
+            ? `Found ${federal.fetched} federal listings. Adding foundation and corporate sources…`
+            : "Adding foundation and corporate sources…",
+        );
+        const sources = await postSearch({
           profile: active,
-          mode: "complete",
+          mode: "sources",
           seed: federal.opportunities,
         });
-        persist(complete);
+        persist(sources);
         setStatus(
-          `Scan complete · ${complete.fetched} listings scored ${complete.evaluated}`,
+          `Found ${sources.fetched} listings. Scoring fit…`,
         );
-        setNotes(publicNotes(complete.errors));
+
+        try {
+          const scored = await postSearch({
+            profile: active,
+            mode: "score",
+            seed: sources.opportunities,
+          });
+          persist(scored);
+          setStatus(
+            `Scan complete · ${scored.fetched} listings scored ${scored.evaluated}`,
+          );
+          setNotes(publicNotes(scored.errors));
+        } catch {
+          setStatus(`Scan complete · ${sources.fetched} listings`);
+          setNotes(publicNotes(sources.errors));
+        }
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "The full scan did not finish.";

@@ -130,6 +130,6 @@ export function publicNotes(errors: string[]) {
     (note) =>
       !/^(hid |removed |filtered )/i.test(note) &&
       !/wright-?patterson|starbase/i.test(note) &&
-      !/abort|timed out|timeout/i.test(note),
+      !/abort|timed out|timeout|did not finish in time/i.test(note),
   );
 }

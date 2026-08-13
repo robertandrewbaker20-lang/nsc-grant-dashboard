@@ -1,7 +1,7 @@
-import { isAbortError } from "./abort";
-import type { Opportunity, Recommendation, SearchProfile } from "./types";
 import { blankDetails } from "./types";
 import { profileToPrompt } from "./profile";
+import type { Opportunity, Recommendation, SearchProfile } from "./types";
+import { WATCHLIST } from "./watchlist";
 
 const XAI_URL = "https://api.x.ai/v1/responses";
 const MODEL = "grok-4.6";
@@ -108,10 +108,13 @@ function funderFrom(value: unknown): Opportunity["funderType"] {
 
 export async function searchWebOpportunities(
   profile: SearchProfile,
-  timeoutMs = 120_000,
+  timeoutMs = 45_000,
 ): Promise<{ opportunities: Opportunity[]; errors: string[] }> {
-  const errors: string[] = [];
   try {
+    const sources = WATCHLIST.filter((item) => !/grants\.gov/i.test(item.name))
+      .map((item) => `- ${item.name}: ${item.note} (${item.url})`)
+      .join("\n");
+
     const prompt = `Find currently open or recurring grants, foundations, corporate giving, and state programs that could fund this organization.
 
 Organization: ${profile.orgName}
@@ -120,7 +123,8 @@ Focus: ${profile.focusAreas.slice(0, 6).join("; ")}
 Keywords: ${profile.keywords.slice(0, 10).join(", ")}
 Looking for: ${profile.lookingFor}
 
-Search official sources: Grants.gov, USDA RD, EPA EE, OJJDP, AmeriCorps, Arkansas Community Foundation, Walton Family Foundation, Winthrop Rockefeller Foundation, Entergy, Tyson, Walmart.org, ADPT outdoor grants, AGFC wildlife education, Hearst Foundations, REI Cooperative Action Fund.
+Use this council source list when a named program fits:
+${sources}
 
 Do not include other-state-only or single-site awards outside Arkansas. Nationwide programs the council can enter from Arkansas are fine.
 
@@ -139,7 +143,7 @@ Return ONLY a JSON array (max 16 items):
 
 Prefer real, named programs with real URLs. Skip generic advice.`;
 
-    const text = await xaiResponses(prompt, true, timeoutMs);
+    const text = await xaiResponses(prompt, false, timeoutMs);
     const rows = parseJsonArray(text);
     const opportunities: Opportunity[] = [];
 
@@ -150,7 +154,7 @@ Prefer real, named programs with real URLs. Skip generic advice.`;
       if (!title) return;
       opportunities.push({
         id: `xai:${index}:${title.slice(0, 40)}`,
-        source: "xAI web search",
+        source: "Foundation search",
         title,
         agency: asText(r.agency),
         description: asText(r.description),
@@ -170,14 +174,9 @@ Prefer real, named programs with real URLs. Skip generic advice.`;
       });
     });
 
-    return { opportunities, errors };
-  } catch (error) {
-    if (isAbortError(error)) {
-      errors.push("Foundation web search did not finish in time.");
-    } else {
-      errors.push(error instanceof Error ? error.message : "xAI search failed");
-    }
-    return { opportunities: [], errors };
+    return { opportunities, errors: [] };
+  } catch {
+    return { opportunities: [], errors: [] };
   }
 }
 

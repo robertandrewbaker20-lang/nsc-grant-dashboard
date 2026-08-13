@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { loadProfile } from "@/lib/profile";
-import { runFederalSearch, runSearch } from "@/lib/search";
+import {
+  runFederalSearch,
+  runScoreSearch,
+  runSearch,
+  runSourceSearch,
+} from "@/lib/search";
 import type { Opportunity, SearchProfile } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -38,7 +43,13 @@ export async function POST(request: Request) {
 
   try {
     const result =
-      mode === "federal" ? await runFederalSearch(profile) : await runSearch(profile, seed);
+      mode === "federal"
+        ? await runFederalSearch(profile)
+        : mode === "sources"
+          ? await runSourceSearch(profile, seed)
+          : mode === "score"
+            ? await runScoreSearch(profile, seed)
+            : await runSearch(profile, seed);
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(

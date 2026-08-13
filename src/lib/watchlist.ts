@@ -1,3 +1,6 @@
+import { blankDetails } from "./types";
+import type { FunderType, Opportunity } from "./types";
+
 export const WATCHLIST = [
   {
     name: "Grants.gov",
@@ -75,3 +78,32 @@ export const WATCHLIST = [
     note: "Outdoor access and belonging",
   },
 ];
+
+function funderTypeFromWatch(name: string, note: string): FunderType {
+  const text = `${name} ${note}`.toLowerCase();
+  if (/grants\.gov|usda|ojjdp|epa|americorps/.test(text)) return "federal";
+  if (/adpt|agfc|arkansas outdoor/.test(text)) return "state";
+  if (/walmart|entergy|tyson/.test(text)) return "corporate";
+  return "foundation";
+}
+
+export function watchlistOpportunities(): Opportunity[] {
+  return WATCHLIST.filter((item) => !/grants\.gov/i.test(item.name)).map((item) => ({
+    id: `watch:${item.url}`,
+    source: "Council source network",
+    title: item.name,
+    agency: item.name,
+    description: item.note,
+    url: item.url,
+    postedDate: null,
+    deadline: "rolling",
+    funderType: funderTypeFromWatch(item.name, item.note),
+    fitScore: null,
+    recommendation: "review" as const,
+    summary: item.note,
+    strengths: [],
+    concerns: [],
+    partnershipRequired: false,
+    ...blankDetails(),
+  }));
+}
