@@ -1,7 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import {
+  readStoredProfile,
+  readStoredResult,
+  writeStoredResult,
+} from "@/lib/client-store";
 import { WATCHLIST } from "@/lib/watchlist";
 import type { Opportunity, SearchProfile, SearchResult } from "@/lib/types";
 
@@ -15,11 +20,24 @@ function scoreClass(score: number | null) {
 type RecommendationFilter = "pursue" | "review" | "pass";
 
 export function Dashboard({ initialProfile }: { initialProfile: SearchProfile }) {
+  const [profile, setProfile] = useState(initialProfile);
   const [status, setStatus] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [filter, setFilter] = useState<"all" | RecommendationFilter>("all");
   const [selected, setSelected] = useState<Opportunity | null>(null);
+
+  useEffect(() => {
+    const storedProfile = readStoredProfile();
+    if (storedProfile) setProfile(storedProfile);
+    const storedResult = readStoredResult();
+    if (storedResult) {
+      setResult(storedResult);
+      setStatus(
+        `Last search: ${storedResult.fetched} listings, scored ${storedResult.evaluated}.`,
+      );
+    }
+  }, []);
 
   const rows = useMemo(() => {
     const list = result?.opportunities ?? [];
@@ -32,13 +50,15 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
     setStatus(null);
     setSelected(null);
     try {
+      const active = readStoredProfile() ?? profile;
       const res = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ profile: active }),
       });
       const data = (await res.json()) as SearchResult;
       setResult(data);
+      writeStoredResult(data);
       const errNote = data.errors.length ? ` (${data.errors.length} notes)` : "";
       setStatus(
         `Found ${data.fetched} listings, scored ${data.evaluated}${errNote}.`,
@@ -57,8 +77,8 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-2xl text-sm text-slate-600">
-            Searching with {initialProfile.keywords.length} saved keywords for{" "}
-            {initialProfile.orgName}. Change them under Search parameters.
+            Searching with {profile.keywords.length} saved keywords for{" "}
+            {profile.orgName}. Change them under Search parameters.
           </p>
           <button
             type="button"

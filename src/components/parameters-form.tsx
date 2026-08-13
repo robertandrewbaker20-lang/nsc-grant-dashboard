@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { readStoredProfile, writeStoredProfile } from "@/lib/client-store";
 import type { FunderType, SearchProfile } from "@/lib/types";
 
 const FUNDER_OPTIONS: FunderType[] = [
@@ -34,6 +35,15 @@ export function ParametersForm({
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    const stored = readStoredProfile();
+    if (!stored) return;
+    setProfile(stored);
+    setKeywordsText(listToText(stored.keywords));
+    setFocusText(listToText(stored.focusAreas));
+    setAgenciesText(listToText(stored.agencies));
+  }, []);
+
   function currentProfile(): SearchProfile {
     return {
       ...profile,
@@ -48,14 +58,17 @@ export function ParametersForm({
     setStatus(null);
     try {
       const next = currentProfile();
+      writeStoredProfile(next);
+      setProfile(next);
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profile: next }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Save failed");
-      setProfile(data.profile);
+      if (!res.ok) {
+        setStatus("Saved in this browser. Return to Results and run a search.");
+        return;
+      }
       setStatus("Search parameters saved. Return to Results and run a search.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Save failed");
