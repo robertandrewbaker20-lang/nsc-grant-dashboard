@@ -1,0 +1,52 @@
+{
+  "orgName": "Natural State Council, Scouting America",
+  "about": "Natural State Council is a 501(c)(3) local council of Scouting America serving 67 counties across Arkansas. Formed from Quapaw Area, Westark Area, and De Soto Area councils, it supports Cub Scouts, Scouts BSA, Venturing, Exploring, and Scoutreach. Programs include council camps, outdoor adventure, STEM and merit badges, character and leadership development, and access support so more Arkansas youth can participate.",
+  "geography": "Arkansas statewide: Central Arkansas, Northwest Arkansas, River Valley, Arkansas Delta, Ozarks, Ouachitas. Rural and small-town communities plus Little Rock, Fayetteville/Bentonville, Fort Smith, Jonesboro, Pine Bluff, and El Dorado.",
+  "keywords": [
+    "positive youth development",
+    "character education",
+    "youth leadership",
+    "outdoor education",
+    "environmental education",
+    "conservation education",
+    "informal STEM",
+    "out-of-school STEM",
+    "youth mentoring",
+    "camp facilities",
+    "rural community facilities",
+    "camperships",
+    "Title I youth programs",
+    "rural youth",
+    "civic readiness"
+  ],
+  "focusAreas": [
+    "Camp and facilities (dining halls, water, ADA, cabins, trails, waterfront)",
+    "Informal STEM and career exploration",
+    "Outdoor and environmental education",
+    "Character, leadership, and civic readiness",
+    "Mentoring and after-school / summer programs",
+    "Access for youth from low-income households and Title I schools",
+    "Rural and small-town youth programming",
+    "Workforce readiness for older youth"
+  ],
+  "lookingFor": "Federal, state, foundation, corporate, and civic funding that a 501(c)(3) Scouting council can lead or join as a partner: camp capital and essential community facilities; outdoor recreation; informal STEM; mentoring; character and leadership; camperships and membership financial assistance; AmeriCorps capacity; and pass-through partnerships with schools, cities, counties, and workforce boards.",
+  "matchCriteria": "Score highly when: 501(c)(3) can apply or partner; Arkansas or nationwide geography; youth development, outdoor/STEM, mentoring, or rural facilities; funds programs, scholarships, or camp infrastructure; reasonable reporting for a council staff team. Flag when a school, city, or university must be lead applicant.",
+  "poorFit": "Skip adult-only workforce, pure biomedical research, invitation-only awards we cannot access, for-profit-only RFPs, and programs that require serving a population the council does not actually enroll.",
+  "funderTypes": [
+    "federal",
+    "state",
+    "foundation",
+    "corporate",
+    "civic"
+  ],
+  "agencies": [
+    "USDA Rural Development",
+    "Department of Justice OJJDP",
+    "EPA Environmental Education",
+    "AmeriCorps",
+    "Department of Education",
+    "NSF informal STEM",
+    "HUD CDBG (as partner)",
+    "Department of Labor WIOA Youth (as partner)"
+  ]
+}
