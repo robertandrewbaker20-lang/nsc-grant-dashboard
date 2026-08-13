@@ -2,37 +2,91 @@
 
 :root {
   --nsc-red: #ce202a;
-  --nsc-red-dark: #a51820;
-  --nsc-blue: #255097;
+  --nsc-red-dark: #af1b24;
+  --nsc-navy: #255097;
+  --nsc-navy-deep: #003f87;
+  --nsc-navy-link: #015697;
   --nsc-sky: #68acfb;
   --nsc-row: #afd4ff;
   --nsc-green: #274718;
+  --nsc-gold: #dbaf0a;
   --ink: #383636;
-  --muted: #5b6573;
-  --background: #eef4fb;
+  --muted: #7b7676;
+  --line: #d5dbe3;
+  --nav: #f5f5f5;
+  --background: #f4f6f9;
   --foreground: #383636;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-nsc-red: var(--nsc-red);
+  --color-nsc-red-dark: var(--nsc-red-dark);
+  --color-nsc-navy: var(--nsc-navy);
+  --color-nsc-navy-deep: var(--nsc-navy-deep);
+  --color-nsc-navy-link: var(--nsc-navy-link);
+  --color-nsc-sky: var(--nsc-sky);
+  --color-nsc-row: var(--nsc-row);
+  --color-nsc-green: var(--nsc-green);
+  --color-nsc-gold: var(--nsc-gold);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-nav: var(--nav);
   --font-sans: var(--font-lato);
+  --font-display: var(--font-dosis);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   color: var(--foreground);
   font-family: var(--font-lato), "Lato", sans-serif;
-  background-color: #eef4fb;
-  background-image:
-    radial-gradient(900px 420px at 8% -10%, rgba(206, 32, 42, 0.16), transparent 55%),
-    radial-gradient(800px 380px at 94% 0%, rgba(37, 80, 151, 0.18), transparent 52%),
-    radial-gradient(700px 480px at 50% 110%, rgba(104, 172, 251, 0.2), transparent 48%),
-    linear-gradient(rgba(37, 80, 151, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 80, 151, 0.06) 1px, transparent 1px);
-  background-size: auto, auto, auto, 48px 48px, 48px 48px;
+  background-color: var(--background);
   min-height: 100%;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--nsc-row) 70%, white);
+  color: var(--ink);
 }
 
 a {
   color: inherit;
+}
+
+.nsc-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgba(56, 54, 54, 0.04),
+    0 10px 28px rgba(0, 63, 135, 0.05);
+}
+
+.nsc-input {
+  width: 100%;
+  border: 1px solid #cfd6de;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--ink);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.nsc-input:focus {
+  border-color: var(--nsc-navy-link);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--nsc-sky) 45%, transparent);
+}
+
+.font-display {
+  font-family: var(--font-dosis), "Dosis", sans-serif;
 }

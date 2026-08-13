@@ -22,12 +22,7 @@ export async function runSearch(profile: SearchProfile): Promise<SearchResult> {
     merged.push(item);
   }
 
-  const { kept, dropped } = filterEligibleOpportunities(merged);
-  if (dropped > 0) {
-    errors.push(
-      `Hid ${dropped} listing${dropped === 1 ? "" : "s"} limited to another state or a single out-of-state site (for example Wright-Patterson AFB / Ohio STARBASE).`,
-    );
-  }
+  const { kept } = filterEligibleOpportunities(merged);
 
   let evaluated = kept;
   let evaluatedCount = 0;
@@ -44,13 +39,7 @@ export async function runSearch(profile: SearchProfile): Promise<SearchResult> {
     errors.push(error instanceof Error ? error.message : "Evaluation failed");
   }
 
-  const afterScore = filterEligibleOpportunities(evaluated);
-  evaluated = afterScore.kept;
-  if (afterScore.dropped > 0) {
-    errors.push(
-      `Removed ${afterScore.dropped} more after scoring because the briefing showed they are not Arkansas-eligible.`,
-    );
-  }
+  evaluated = filterEligibleOpportunities(evaluated).kept;
 
   evaluated.sort((a, b) => (b.fitScore ?? 0) - (a.fitScore ?? 0));
 

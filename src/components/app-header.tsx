@@ -1,49 +1,91 @@
-import Link from "next/link";
+"use client";
 
-export function AppHeader({ active }: { active: "results" | "parameters" }) {
-  const tab = "rounded-full px-4 py-1.5 text-sm font-black no-underline transition";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+function navClass(active: boolean) {
+  return [
+    "px-4 py-[15px] text-[13px] font-bold uppercase tracking-[0.08em] no-underline transition-colors",
+    active
+      ? "bg-[#eeeeee] text-nsc-red"
+      : "text-[#7b7676] hover:bg-[#eeeeee] hover:text-nsc-red",
+  ].join(" ");
+}
+
+export function AppHeader() {
+  const pathname = usePathname();
+  const onPortfolio = pathname === "/";
+  const onParameters = pathname.startsWith("/parameters");
 
   return (
-    <header className="sticky top-0 z-30 border-b-4 border-[#ce202a] bg-white/90 shadow-sm backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-4">
-          <img src="/logo.png" alt="Natural State Council" className="h-11 w-auto" />
-          <div className="hidden border-l border-[#afd4ff] pl-4 sm:block">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#255097]">
-              Scouting America · Arkansas
-            </p>
-            <h1 className="text-lg font-black tracking-tight text-[#383636]">
-              Grant Finder
-            </h1>
-          </div>
+    <header className="sticky top-0 z-30">
+      <div className="bg-nsc-red text-white">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 px-4 py-[7px] text-[13px] sm:px-6">
+          <p className="min-w-0 truncate">
+            <a href="tel:5016644780" className="text-white no-underline hover:underline">
+              (501) 664-4780
+            </a>
+            <span className="mx-2 opacity-70">|</span>
+            <a
+              href="mailto:NaturalStateBSA@scouting.org"
+              className="text-white no-underline hover:underline"
+            >
+              NaturalStateBSA@scouting.org
+            </a>
+          </p>
+          <p className="hidden shrink-0 font-display text-[12px] font-semibold uppercase tracking-[0.16em] sm:block">
+            Arkansas · Scouting America
+          </p>
         </div>
-        <nav className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/"
-            className={`${tab} ${
-              active === "results"
-                ? "bg-[#255097] text-white"
-                : "border-2 border-[#255097] bg-white text-[#255097]"
-            }`}
-          >
-            Portfolio
+      </div>
+
+      <div className="border-b border-[#e6e6e6] bg-white">
+        <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
+          <Link href="/" className="flex min-w-0 items-center gap-4 no-underline">
+            <Image
+              src="/logo.png"
+              alt="Scouting America — Natural State Council"
+              width={760}
+              height={150}
+              priority
+              className="h-12 w-auto sm:h-[58px]"
+            />
+            <div className="hidden border-l border-line pl-4 md:block">
+              <p className="font-display text-[11px] font-bold uppercase tracking-[0.2em] text-nsc-navy-link">
+                Staff tool
+              </p>
+              <p className="text-lg font-bold leading-tight tracking-tight text-ink">
+                Grant Finder
+              </p>
+            </div>
           </Link>
-          <Link
-            href="/parameters"
-            className={`${tab} border-2 border-black bg-[#ce202a] text-black`}
-          >
-            Search parameters
-          </Link>
+
           <a
             href="https://www.naturalstatecouncil.org/"
             target="_blank"
             rel="noreferrer"
-            className="rounded-full border-2 border-[#ce202a] bg-white px-3 py-1.5 text-sm font-black text-[#ce202a] no-underline hover:bg-[#ce202a] hover:text-black"
+            className="rounded-t-md bg-nsc-navy-link px-3.5 py-1.5 font-display text-sm font-bold uppercase tracking-wide text-white no-underline transition-colors hover:bg-[#014274]"
           >
-            naturalstatecouncil.org
+            Council website
           </a>
-        </nav>
+        </div>
       </div>
+
+      <nav className="border-b border-[#ccc] bg-nav" aria-label="Grant Finder">
+        <div className="mx-auto flex max-w-[1400px] px-2 sm:px-4">
+          <Link href="/" className={navClass(onPortfolio)} aria-current={onPortfolio ? "page" : undefined}>
+            Portfolio
+          </Link>
+          <Link
+            href="/parameters"
+            className={navClass(onParameters)}
+            aria-current={onParameters ? "page" : undefined}
+          >
+            Search parameters
+          </Link>
+        </div>
+      </nav>
     </header>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { readStoredProfile, writeStoredProfile } from "@/lib/client-store";
+import { useState } from "react";
+import { useStoredProfile, writeStoredProfile } from "@/lib/client-store";
 import type { FunderType, SearchProfile } from "@/lib/types";
 
 const FUNDER_OPTIONS: FunderType[] = [
@@ -29,19 +29,22 @@ function Field({
   onChange,
   rows = 6,
   wide = false,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   rows?: number;
   wide?: boolean;
+  hint?: string;
 }) {
   return (
-    <label className={`block text-sm font-black text-black ${wide ? "md:col-span-2" : ""}`}>
+    <label className={`nsc-label ${wide ? "md:col-span-2" : ""}`}>
       {label}
+      {hint && <span className="mt-0.5 block text-xs font-normal text-muted">{hint}</span>}
       <textarea
         rows={rows}
-        className="mt-1.5 w-full rounded-xl border-2 border-black/25 bg-[#f6d4d6] p-3 font-normal text-sm leading-relaxed text-black placeholder:text-black/60 outline-none focus:border-black"
+        className="nsc-input mt-2 font-normal"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -54,21 +57,18 @@ export function ParametersForm({
 }: {
   initialProfile: SearchProfile;
 }) {
+  const stored = useStoredProfile(initialProfile);
+  const source = stored === initialProfile ? "server" : "browser";
+  return <ParametersFields key={source} initialProfile={stored} />;
+}
+
+function ParametersFields({ initialProfile }: { initialProfile: SearchProfile }) {
   const [profile, setProfile] = useState(initialProfile);
   const [keywordsText, setKeywordsText] = useState(listToText(initialProfile.keywords));
   const [focusText, setFocusText] = useState(listToText(initialProfile.focusAreas));
   const [agenciesText, setAgenciesText] = useState(listToText(initialProfile.agencies));
   const [status, setStatus] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    const stored = readStoredProfile();
-    if (!stored) return;
-    setProfile(stored);
-    setKeywordsText(listToText(stored.keywords));
-    setFocusText(listToText(stored.focusAreas));
-    setAgenciesText(listToText(stored.agencies));
-  }, []);
 
   function currentProfile(): SearchProfile {
     return {
@@ -112,30 +112,37 @@ export function ParametersForm({
   }
 
   return (
-    <section className="rounded-2xl border-2 border-black bg-[#ce202a] p-6 text-black shadow-sm">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <section className="nsc-card p-6 sm:p-8">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black">
+          <p className="font-display text-[12px] font-bold uppercase tracking-[0.18em] text-nsc-navy-link">
             Search thesis
           </p>
-          <h2 className="mt-1 text-xl font-black text-black">What the council is seeking</h2>
-          <p className="mt-1 max-w-2xl text-sm font-semibold text-black">
-            These fields drive Grants.gov and xAI search. Save, then run a scan from
-            Portfolio. Site-specific awards outside Arkansas are hidden automatically.
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
+            What the council is seeking
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">
+            These fields drive Grants.gov and web search. Save, then run a scan from
+            Portfolio.
           </p>
         </div>
         <button
           type="button"
           onClick={saveCriteria}
           disabled={saving}
-          className="rounded-full border-2 border-black bg-black px-5 py-2.5 text-sm font-black text-[#ce202a] disabled:opacity-50"
+          className="rounded-md bg-nsc-navy-link px-5 py-2.5 font-display text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#014274] disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save parameters"}
         </button>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
-        <Field label="Keywords (one per line)" value={keywordsText} onChange={setKeywordsText} />
+        <Field
+          label="Keywords"
+          hint="One per line"
+          value={keywordsText}
+          onChange={setKeywordsText}
+        />
         <Field label="Focus areas" value={focusText} onChange={setFocusText} />
         <Field
           label="Geography"
@@ -163,15 +170,16 @@ export function ParametersForm({
           onChange={(matchCriteria) => setProfile((p) => ({ ...p, matchCriteria }))}
         />
         <Field
-          label="Poor fit — hidden from Portfolio"
+          label="Poor fit"
+          hint="Listings matching this guidance stay out of Portfolio"
           value={profile.poorFit}
           rows={5}
           onChange={(poorFit) => setProfile((p) => ({ ...p, poorFit }))}
         />
       </div>
 
-      <div className="mt-5">
-        <p className="mb-2 text-sm font-black text-black">Funder types</p>
+      <div className="mt-6 border-t border-line pt-5">
+        <p className="nsc-label mb-3">Funder types</p>
         <div className="flex flex-wrap gap-2">
           {FUNDER_OPTIONS.map((type) => {
             const on = profile.funderTypes.includes(type);
@@ -180,10 +188,10 @@ export function ParametersForm({
                 key={type}
                 type="button"
                 onClick={() => toggleFunder(type)}
-                className={`rounded-full px-3 py-1 text-xs font-black uppercase ${
+                className={`rounded-full px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
                   on
-                    ? "border-2 border-black bg-black text-[#ce202a]"
-                    : "border-2 border-black bg-[#f6d4d6] text-black"
+                    ? "bg-nsc-navy text-white"
+                    : "border border-line bg-white text-muted hover:border-nsc-navy hover:text-nsc-navy"
                 }`}
               >
                 {type}
@@ -192,7 +200,11 @@ export function ParametersForm({
           })}
         </div>
       </div>
-      {status && <p className="mt-4 text-sm font-black text-black">{status}</p>}
+      {status && (
+        <p className="mt-5 rounded-lg border border-nsc-row/80 bg-[#f4f8fd] px-4 py-3 text-sm font-semibold text-nsc-navy-deep">
+          {status}
+        </p>
+      )}
     </section>
   );
 }
