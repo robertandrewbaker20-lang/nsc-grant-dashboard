@@ -41,7 +41,7 @@ function Field({
       {label}
       <textarea
         rows={rows}
-        className="mt-1.5 w-full rounded-xl border-2 border-black/25 bg-[#ce202a] p-3 font-normal text-sm leading-relaxed text-black placeholder:text-black/70 outline-none focus:border-black"
+        className="mt-1.5 w-full rounded-xl border-2 border-black/25 bg-[#f6d4d6] p-3 font-normal text-sm leading-relaxed text-black placeholder:text-black/60 outline-none focus:border-black"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -67,12 +67,8 @@ export function ParametersForm({
     setProfile(stored);
     setKeywordsText(listToText(stored.keywords));
     setFocusText(listToText(stored.focusAreas));
-    setAgenciesText(listToListSafe(stored.agencies));
+    setAgenciesText(listToText(stored.agencies));
   }, []);
-
-  function listToListSafe(items: string[]) {
-    return listToText(items);
-  }
 
   function currentProfile(): SearchProfile {
     return {
@@ -187,7 +183,7 @@ export function ParametersForm({
                 className={`rounded-full px-3 py-1 text-xs font-black uppercase ${
                   on
                     ? "border-2 border-black bg-black text-[#ce202a]"
-                    : "border-2 border-black bg-[#ce202a] text-black"
+                    : "border-2 border-black bg-[#f6d4d6] text-black"
                 }`}
               >
                 {type}
