@@ -37,11 +37,11 @@ function Field({
   wide?: boolean;
 }) {
   return (
-    <label className={`block text-sm font-bold text-slate-200 ${wide ? "md:col-span-2" : ""}`}>
+    <label className={`block text-sm font-bold text-[#383636] ${wide ? "md:col-span-2" : ""}`}>
       {label}
       <textarea
         rows={rows}
-        className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/30 p-3 font-normal text-sm leading-relaxed text-white outline-none focus:border-teal-300/50"
+        className="mt-1.5 w-full rounded-xl border border-[#afd4ff] bg-white p-3 font-normal text-sm leading-relaxed text-[#383636] outline-none focus:border-[#255097]"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -112,14 +112,14 @@ export function ParametersForm({
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-950/50 p-6 backdrop-blur-xl">
+    <section className="rounded-2xl border border-[#68acfb]/50 bg-white/85 p-6 backdrop-blur-xl">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#255097]">
             Search thesis
           </p>
-          <h2 className="mt-1 text-xl font-black text-white">What the council is seeking</h2>
-          <p className="mt-1 max-w-2xl text-sm text-slate-400">
+          <h2 className="mt-1 text-xl font-black text-[#383636]">What the council is seeking</h2>
+          <p className="mt-1 max-w-2xl text-sm text-[#5b6573]">
             These fields drive Grants.gov and xAI search. Save, then run a scan from
             Portfolio.
           </p>
@@ -128,7 +128,7 @@ export function ParametersForm({
           type="button"
           onClick={saveCriteria}
           disabled={saving}
-          className="rounded-full bg-white px-5 py-2.5 text-sm font-black text-slate-950 disabled:opacity-50"
+          className="rounded-full bg-[#ce202a] px-5 py-2.5 text-sm font-black text-white disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save parameters"}
         </button>
@@ -171,7 +171,7 @@ export function ParametersForm({
       </div>
 
       <div className="mt-5">
-        <p className="mb-2 text-sm font-bold text-white">Funder types</p>
+        <p className="mb-2 text-sm font-bold text-[#383636]">Funder types</p>
         <div className="flex flex-wrap gap-2">
           {FUNDER_OPTIONS.map((type) => {
             const on = profile.funderTypes.includes(type);
@@ -182,8 +182,8 @@ export function ParametersForm({
                 onClick={() => toggleFunder(type)}
                 className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
                   on
-                    ? "bg-white text-slate-950"
-                    : "border border-white/15 text-slate-300"
+                    ? "bg-[#255097] text-white"
+                    : "border border-[#255097]/25 text-[#255097]"
                 }`}
               >
                 {type}
@@ -192,7 +192,7 @@ export function ParametersForm({
           })}
         </div>
       </div>
-      {status && <p className="mt-4 text-sm text-teal-300">{status}</p>}
+      {status && <p className="mt-4 text-sm text-[#255097]">{status}</p>}
     </section>
   );
 }

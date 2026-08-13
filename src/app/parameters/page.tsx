@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function ParametersPage() {
   const profile = await loadProfile();
   return (
-    <div className="min-h-screen text-slate-100">
+    <div className="min-h-screen">
       <AppHeader active="parameters" />
       <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
         <ParametersForm initialProfile={profile} />

@@ -149,13 +149,13 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
       <main className="mx-auto max-w-[1400px] space-y-6 px-4 py-6 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-teal-300">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#255097]">
               Live grant pipeline
             </p>
-            <h2 className="mt-1 text-3xl font-black tracking-tight text-white">
+            <h2 className="mt-1 text-3xl font-black tracking-tight text-[#383636]">
               {profile.orgName}
             </h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-400">
+            <p className="mt-2 max-w-2xl text-sm text-[#5b6573]">
               Drag cards between Review, Pursue, and Pass. Open a card for the
               briefing, then use the application website to go to the funder.
             </p>
@@ -183,19 +183,19 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
           ].map(([label, value, hint]) => (
             <div
               key={label}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur-md"
+              className="rounded-2xl border border-[#68acfb]/50 bg-white/80 px-4 py-4 shadow-sm backdrop-blur-md"
             >
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#255097]">
                 {label}
               </p>
-              <p className="mt-2 truncate text-2xl font-black text-white">{value}</p>
-              <p className="mt-1 truncate text-xs text-slate-500">{hint}</p>
+              <p className="mt-2 truncate text-2xl font-black text-[#383636]">{value}</p>
+              <p className="mt-1 truncate text-xs text-[#5b6573]">{hint}</p>
             </div>
           ))}
         </div>
 
         {status && (
-          <p className="rounded-xl border border-white/10 bg-black/30 px-4 py-2 text-sm text-slate-300">
+          <p className="rounded-xl border border-[#68acfb]/40 bg-white/80 px-4 py-2 text-sm text-[#5b6573]">
             {status}
           </p>
         )}
@@ -214,22 +214,22 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
                   if (id) moveTo(id, lane.id);
                   setDraggingId(null);
                 }}
-                className="min-h-[420px] rounded-2xl border border-white/10 bg-slate-950/40 p-3 backdrop-blur-md"
+                className="min-h-[420px] rounded-2xl border border-[#68acfb]/45 bg-white/70 p-3 backdrop-blur-md"
               >
                 <div className="mb-3 flex items-end justify-between px-1">
                   <div>
-                    <h3 className="text-sm font-black uppercase tracking-[0.14em] text-white">
+                    <h3 className="text-sm font-black uppercase tracking-[0.14em] text-[#255097]">
                       {lane.label}
                     </h3>
-                    <p className="text-xs text-slate-500">{lane.hint}</p>
+                    <p className="text-xs text-[#5b6573]">{lane.hint}</p>
                   </div>
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-bold text-white">
+                  <span className="rounded-full bg-[#255097] px-2 py-0.5 text-xs font-bold text-white">
                     {byLane[lane.id].length}
                   </span>
                 </div>
                 <div className="space-y-3">
                   {byLane[lane.id].length === 0 && (
-                    <p className="rounded-xl border border-dashed border-white/10 px-3 py-8 text-center text-xs text-slate-500">
+                    <p className="rounded-xl border border-dashed border-[#68acfb]/50 px-3 py-8 text-center text-xs text-[#5b6573]">
                       Drop a card here
                     </p>
                   )}
@@ -246,14 +246,12 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
                       }
                       className={`cursor-pointer rounded-xl border p-3 transition ${
                         selectedId === row.id
-                          ? "border-white bg-white text-slate-950"
-                          : "border-white/10 bg-white/5 text-slate-100 hover:border-white/30"
+                          ? "border-[#ce202a] bg-white text-[#383636] ring-2 ring-[#ce202a]/20"
+                          : "border-[#afd4ff] bg-white text-[#383636] hover:border-[#255097]"
                       }`}
                     >
                       <p className="text-sm font-black leading-snug">{row.title}</p>
-                      <p
-                        className={`mt-1 text-xs leading-snug ${selectedId === row.id ? "text-slate-600" : "text-slate-400"}`}
-                      >
+                      <p className="mt-1 text-xs leading-snug text-[#5b6573]">
                         {row.agency ?? row.source}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold">
@@ -267,9 +265,7 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
                           target="_blank"
                           rel="noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className={`mt-2 inline-block text-[11px] font-bold underline ${
-                            selectedId === row.id ? "text-[#ce202a]" : "text-teal-300"
-                          }`}
+                          className="mt-2 inline-block text-[11px] font-bold text-[#ce202a] underline"
                         >
                           {hostFromUrl(row.url)}
                         </a>
@@ -295,10 +291,10 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
         </section>
 
         {!selected && (
-          <section className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md">
+          <section className="rounded-2xl border border-[#68acfb]/45 bg-white/75 p-5 backdrop-blur-md">
             <div className="mb-4 flex items-center gap-2">
               <img src="/fleur.png" alt="" className="h-7 w-7" />
-              <h2 className="text-sm font-black uppercase tracking-[0.14em] text-white">
+              <h2 className="text-sm font-black uppercase tracking-[0.14em] text-[#255097]">
                 Source network
               </h2>
             </div>
@@ -309,10 +305,10 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
                   href={item.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-xl border border-white/10 bg-black/20 p-3 no-underline transition hover:border-teal-300/40"
+                  className="rounded-xl border border-[#afd4ff] bg-white p-3 no-underline transition hover:border-[#255097]"
                 >
-                  <p className="text-sm font-bold text-white">{item.name}</p>
-                  <p className="mt-1 text-xs text-slate-400">{item.note}</p>
+                  <p className="text-sm font-bold text-[#255097]">{item.name}</p>
+                  <p className="mt-1 text-xs text-[#5b6573]">{item.note}</p>
                 </a>
               ))}
             </div>
