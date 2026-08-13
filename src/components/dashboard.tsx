@@ -1,32 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { AppHeader } from "@/components/app-header";
 import { WATCHLIST } from "@/lib/watchlist";
-import type {
-  FunderType,
-  Opportunity,
-  SearchProfile,
-  SearchResult,
-} from "@/lib/types";
-
-const FUNDER_OPTIONS: FunderType[] = [
-  "federal",
-  "state",
-  "foundation",
-  "corporate",
-  "civic",
-];
-
-function listToText(items: string[]) {
-  return items.join("\n");
-}
-
-function textToList(value: string) {
-  return value
-    .split(/[\n,]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+import type { Opportunity, SearchProfile, SearchResult } from "@/lib/types";
 
 function scoreClass(score: number | null) {
   if (score == null) return "bg-slate-200 text-slate-700";
@@ -35,26 +12,14 @@ function scoreClass(score: number | null) {
   return "bg-slate-300 text-slate-800";
 }
 
+type RecommendationFilter = "pursue" | "review" | "pass";
+
 export function Dashboard({ initialProfile }: { initialProfile: SearchProfile }) {
-  const [profile, setProfile] = useState(initialProfile);
-  const [keywordsText, setKeywordsText] = useState(listToText(initialProfile.keywords));
-  const [focusText, setFocusText] = useState(listToText(initialProfile.focusAreas));
-  const [agenciesText, setAgenciesText] = useState(listToText(initialProfile.agencies));
   const [status, setStatus] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [filter, setFilter] = useState<"all" | RecommendationFilter>("all");
   const [selected, setSelected] = useState<Opportunity | null>(null);
-
-  type RecommendationFilter = "pursue" | "review" | "pass";
-
-  const currentProfile = (): SearchProfile => ({
-    ...profile,
-    keywords: textToList(keywordsText),
-    focusAreas: textToList(focusText),
-    agencies: textToList(agenciesText),
-  });
 
   const rows = useMemo(() => {
     const list = result?.opportunities ?? [];
@@ -62,38 +27,15 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
     return list.filter((o) => o.recommendation === filter);
   }, [result, filter]);
 
-  async function saveCriteria() {
-    setSaving(true);
-    setStatus(null);
-    try {
-      const next = currentProfile();
-      const res = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile: next }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Save failed");
-      setProfile(data.profile);
-      setStatus("Search parameters saved.");
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Save failed");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   async function runSearch() {
     setRunning(true);
     setStatus(null);
     setSelected(null);
     try {
-      const next = currentProfile();
-      setProfile(next);
       const res = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile: next }),
+        body: JSON.stringify({}),
       });
       const data = (await res.json()) as SearchResult;
       setResult(data);
@@ -108,160 +50,26 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
     }
   }
 
-  function toggleFunder(type: FunderType) {
-    setProfile((p) => {
-      const has = p.funderTypes.includes(type);
-      return {
-        ...p,
-        funderTypes: has
-          ? p.funderTypes.filter((t) => t !== type)
-          : [...p.funderTypes, type],
-      };
-    });
-  }
-
   return (
     <div className="min-h-screen">
-      <header className="border-b-4 border-[#ce202a] bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3">
-          <div className="flex items-center gap-4">
-            <img src="/logo.png" alt="Natural State Council" className="h-12 w-auto" />
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#255097]">
-                Scouting America · Arkansas
-              </p>
-              <h1 className="text-xl font-black text-[#383636]">Grant Finder</h1>
-            </div>
-          </div>
-          <a
-            href="https://www.naturalstatecouncil.org/"
-            className="text-sm font-bold"
-            target="_blank"
-            rel="noreferrer"
-          >
-            naturalstatecouncil.org
-          </a>
-        </div>
-      </header>
+      <AppHeader active="results" />
 
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
-        <section className="rounded-lg border border-[#68acfb] bg-white p-5 shadow-sm">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold text-[#255097]">Search parameters</h2>
-              <p className="text-sm text-slate-600">
-                Change keywords, focus areas, and funder types, then run a search.
-                Grants.gov plus xAI web search score each listing for council fit.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={saveCriteria}
-                disabled={saving}
-                className="rounded border border-[#255097] px-4 py-2 text-sm font-bold text-[#255097] disabled:opacity-50"
-              >
-                {saving ? "Saving…" : "Save"}
-              </button>
-              <button
-                type="button"
-                onClick={runSearch}
-                disabled={running}
-                className="rounded bg-[#ce202a] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-              >
-                {running ? "Searching…" : "Run search"}
-              </button>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="block text-sm font-bold">
-              Keywords (one per line)
-              <textarea
-                className="mt-1 h-32 w-full rounded border border-slate-300 p-2 font-normal"
-                value={keywordsText}
-                onChange={(e) => setKeywordsText(e.target.value)}
-              />
-            </label>
-            <label className="block text-sm font-bold">
-              Focus areas
-              <textarea
-                className="mt-1 h-32 w-full rounded border border-slate-300 p-2 font-normal"
-                value={focusText}
-                onChange={(e) => setFocusText(e.target.value)}
-              />
-            </label>
-            <label className="block text-sm font-bold">
-              Geography
-              <textarea
-                className="mt-1 h-24 w-full rounded border border-slate-300 p-2 font-normal"
-                value={profile.geography}
-                onChange={(e) =>
-                  setProfile((p) => ({ ...p, geography: e.target.value }))
-                }
-              />
-            </label>
-            <label className="block text-sm font-bold">
-              Agencies and portals to prefer
-              <textarea
-                className="mt-1 h-24 w-full rounded border border-slate-300 p-2 font-normal"
-                value={agenciesText}
-                onChange={(e) => setAgenciesText(e.target.value)}
-              />
-            </label>
-            <label className="block text-sm font-bold md:col-span-2">
-              Looking for
-              <textarea
-                className="mt-1 h-24 w-full rounded border border-slate-300 p-2 font-normal"
-                value={profile.lookingFor}
-                onChange={(e) =>
-                  setProfile((p) => ({ ...p, lookingFor: e.target.value }))
-                }
-              />
-            </label>
-            <label className="block text-sm font-bold">
-              Match criteria
-              <textarea
-                className="mt-1 h-24 w-full rounded border border-slate-300 p-2 font-normal"
-                value={profile.matchCriteria}
-                onChange={(e) =>
-                  setProfile((p) => ({ ...p, matchCriteria: e.target.value }))
-                }
-              />
-            </label>
-            <label className="block text-sm font-bold">
-              Poor fit
-              <textarea
-                className="mt-1 h-24 w-full rounded border border-slate-300 p-2 font-normal"
-                value={profile.poorFit}
-                onChange={(e) =>
-                  setProfile((p) => ({ ...p, poorFit: e.target.value }))
-                }
-              />
-            </label>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {FUNDER_OPTIONS.map((type) => {
-              const on = profile.funderTypes.includes(type);
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => toggleFunder(type)}
-                  className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
-                    on
-                      ? "bg-[#255097] text-white"
-                      : "bg-slate-200 text-slate-600"
-                  }`}
-                >
-                  {type}
-                </button>
-              );
-            })}
-          </div>
-          {status && <p className="mt-3 text-sm text-slate-700">{status}</p>}
-        </section>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="max-w-2xl text-sm text-slate-600">
+            Searching with {initialProfile.keywords.length} saved keywords for{" "}
+            {initialProfile.orgName}. Change them under Search parameters.
+          </p>
+          <button
+            type="button"
+            onClick={runSearch}
+            disabled={running}
+            className="rounded bg-[#ce202a] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+          >
+            {running ? "Searching…" : "Run search"}
+          </button>
+        </div>
+        {status && <p className="text-sm text-slate-700">{status}</p>}
 
         <section className="grid gap-6 lg:grid-cols-[1fr_280px]">
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
