@@ -106,6 +106,8 @@ ${profileToPrompt(profile)}
 
 Search official sources: Grants.gov, USDA RD, EPA EE, OJJDP, AmeriCorps, Arkansas Community Foundation, Walton Family Foundation, Winthrop Rockefeller Foundation, Entergy, Tyson, Walmart.org, ADPT outdoor grants, AGFC wildlife education, Hearst Foundations, REI Cooperative Action Fund.
 
+Do NOT include awards that an Arkansas council cannot enter: other-state-only programs, or site-specific vehicles (Wright-Patterson AFB STARBASE, a single Ohio installation, any named base outside Arkansas). Nationwide programs the council can apply to from Arkansas are fine.
+
 Return ONLY a JSON array (max 16 items):
 [{
   "title": "",
@@ -166,11 +168,13 @@ export async function evaluateOpportunities(
   if (items.length === 0) return items;
 
   const batch = items.slice(0, 24);
-  const prompt = `You are a grant strategist for ${profile.orgName}.
+  const prompt = `You are a grant strategist for ${profile.orgName}, an Arkansas-only Scouting council.
 
 ${profileToPrompt(profile)}
 
-Score each opportunity 0-100. Prefer precise language: youth from low-income households, Title I schools, rural and small-town youth, first-generation campers — not "disenfranchised."
+Score EACH opportunity 0-100. You MUST return one object for every id listed. Prefer precise language: youth from low-income households, Title I schools, rural and small-town youth, first-generation campers — not "disenfranchised."
+
+If the award is site-specific to another state or installation (Ohio, Wright-Patterson AFB, a single STARBASE site the council cannot enter), set fitScore to 0 and recommendation to pass.
 
 Opportunities:
 ${JSON.stringify(
@@ -187,9 +191,10 @@ ${JSON.stringify(
     })),
   )}
 
-Return ONLY a JSON array:
+Return ONLY a JSON array with one row per id:
 [{
   "id": "",
+  "title": "",
   "fitScore": 0,
   "recommendation": "pursue|review|pass",
   "summary": "2 sentences on council fit",
@@ -212,22 +217,25 @@ Return ONLY a JSON array:
   const text = await xaiResponses(prompt, false);
   const rows = parseJsonArray(text);
   const byId = new Map<string, Record<string, unknown>>();
+  const byTitle = new Map<string, Record<string, unknown>>();
   for (const row of rows) {
     if (!row || typeof row !== "object") continue;
     const r = row as Record<string, unknown>;
     if (typeof r.id === "string") byId.set(r.id, r);
+    if (typeof r.title === "string") byTitle.set(r.title.trim().toLowerCase(), r);
   }
 
   return items.map((item) => {
-    const ev = byId.get(item.id);
+    const ev = byId.get(item.id) ?? byTitle.get(item.title.trim().toLowerCase());
     if (!ev) return item;
     const rec = String(ev.recommendation ?? "review");
     const recommendation: Recommendation = ["pursue", "review", "pass"].includes(rec)
       ? (rec as Recommendation)
       : "review";
+    const rawScore = Number(ev.fitScore);
     return {
       ...item,
-      fitScore: Math.min(100, Math.max(0, Number(ev.fitScore ?? 50))),
+      fitScore: Number.isFinite(rawScore) ? Math.min(100, Math.max(0, rawScore)) : 50,
       recommendation,
       summary: asText(ev.summary) ?? item.summary,
       strengths: asStringList(ev.strengths),
