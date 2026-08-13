@@ -1,21 +1,25 @@
 import Link from "next/link";
 
 export function AppHeader({ active }: { active: "results" | "parameters" }) {
-  const tab = "rounded-md px-3 py-1.5 text-sm font-bold no-underline transition-colors";
-  const on = "bg-[#ce202a] text-white shadow-sm";
-  const off = "text-[#255097] hover:bg-[#e8f2ff]";
+  const tab =
+    "rounded-full px-4 py-1.5 text-sm font-bold no-underline transition";
+  const on = "bg-white text-slate-950 shadow-[0_0_24px_rgba(255,255,255,0.15)]";
+  const off =
+    "border border-white/15 bg-white/5 text-slate-100 hover:bg-white/10";
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#d5deea] bg-white/95 shadow-sm backdrop-blur">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-[#070b14]/80 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-4">
-          <img src="/logo.png" alt="Natural State Council" className="h-11 w-auto" />
-          <div className="hidden border-l border-[#d5deea] pl-4 sm:block">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#255097]">
+          <div className="rounded-xl bg-white px-2 py-1.5">
+            <img src="/logo.png" alt="Natural State Council" className="h-8 w-auto" />
+          </div>
+          <div className="hidden sm:block">
+            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-teal-300">
               Scouting America · Arkansas
             </p>
-            <h1 className="text-lg font-black tracking-tight text-[#1c2430]">
-              Funding intelligence
+            <h1 className="text-lg font-black tracking-tight text-white">
+              Grant command
             </h1>
           </div>
         </div>
@@ -29,14 +33,6 @@ export function AppHeader({ active }: { active: "results" | "parameters" }) {
           >
             Search parameters
           </Link>
-          <a
-            href="https://www.naturalstatecouncil.org/"
-            className="hidden text-xs font-bold text-[#5c6776] no-underline hover:text-[#ce202a] sm:inline"
-            target="_blank"
-            rel="noreferrer"
-          >
-            naturalstatecouncil.org
-          </a>
         </nav>
       </div>
     </header>

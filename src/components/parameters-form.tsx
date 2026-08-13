@@ -37,11 +37,11 @@ function Field({
   wide?: boolean;
 }) {
   return (
-    <label className={`block text-sm font-bold text-[#1c2430] ${wide ? "md:col-span-2" : ""}`}>
+    <label className={`block text-sm font-bold text-slate-200 ${wide ? "md:col-span-2" : ""}`}>
       {label}
       <textarea
         rows={rows}
-        className="mt-1.5 w-full rounded-lg border border-[#d5deea] bg-[#f7f9fc] p-3 font-normal text-sm leading-relaxed outline-none focus:border-[#68acfb] focus:bg-white"
+        className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/30 p-3 font-normal text-sm leading-relaxed text-white outline-none focus:border-teal-300/50"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -86,16 +86,12 @@ export function ParametersForm({
       const next = currentProfile();
       writeStoredProfile(next);
       setProfile(next);
-      const res = await fetch("/api/profile", {
+      await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profile: next }),
       });
-      if (!res.ok) {
-        setStatus("Saved in this browser. Return to Portfolio and run a search.");
-        return;
-      }
-      setStatus("Search parameters saved. Return to Portfolio and run a search.");
+      setStatus("Saved. Return to Portfolio and run a scan.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Save failed");
     } finally {
@@ -116,15 +112,15 @@ export function ParametersForm({
   }
 
   return (
-    <section className="rounded-2xl border border-[#d5deea] bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-white/10 bg-slate-950/50 p-6 backdrop-blur-xl">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#255097]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300">
             Search thesis
           </p>
-          <h2 className="mt-1 text-xl font-black">What the council is seeking</h2>
-          <p className="mt-1 max-w-2xl text-sm text-[#5c6776]">
-            These fields drive Grants.gov and xAI search. Save, then run a search from
+          <h2 className="mt-1 text-xl font-black text-white">What the council is seeking</h2>
+          <p className="mt-1 max-w-2xl text-sm text-slate-400">
+            These fields drive Grants.gov and xAI search. Save, then run a scan from
             Portfolio.
           </p>
         </div>
@@ -132,7 +128,7 @@ export function ParametersForm({
           type="button"
           onClick={saveCriteria}
           disabled={saving}
-          className="rounded-md bg-[#ce202a] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+          className="rounded-full bg-white px-5 py-2.5 text-sm font-black text-slate-950 disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save parameters"}
         </button>
@@ -175,7 +171,7 @@ export function ParametersForm({
       </div>
 
       <div className="mt-5">
-        <p className="mb-2 text-sm font-bold">Funder types</p>
+        <p className="mb-2 text-sm font-bold text-white">Funder types</p>
         <div className="flex flex-wrap gap-2">
           {FUNDER_OPTIONS.map((type) => {
             const on = profile.funderTypes.includes(type);
@@ -185,7 +181,9 @@ export function ParametersForm({
                 type="button"
                 onClick={() => toggleFunder(type)}
                 className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
-                  on ? "bg-[#255097] text-white" : "bg-[#eef2f7] text-[#5c6776]"
+                  on
+                    ? "bg-white text-slate-950"
+                    : "border border-white/15 text-slate-300"
                 }`}
               >
                 {type}
@@ -194,7 +192,7 @@ export function ParametersForm({
           })}
         </div>
       </div>
-      {status && <p className="mt-4 text-sm text-[#255097]">{status}</p>}
+      {status && <p className="mt-4 text-sm text-teal-300">{status}</p>}
     </section>
   );
 }

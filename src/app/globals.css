@@ -1,20 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --nsc-red: #ce202a;
-  --nsc-red-dark: #a51820;
-  --nsc-blue: #1d3f78;
-  --nsc-blue-mid: #255097;
-  --nsc-sky: #68acfb;
-  --nsc-row: #e8f2ff;
-  --nsc-green: #274718;
-  --nsc-tan: #83775f;
-  --nsc-ink: #1c2430;
-  --nsc-muted: #5c6776;
-  --background: #eef2f7;
-  --foreground: #1c2430;
-  --surface: #ffffff;
-  --line: #d5deea;
+  --nsc-red: #ff4d57;
+  --nsc-red-deep: #ce202a;
+  --nsc-cyan: #5eead4;
+  --nsc-blue: #7dd3fc;
+  --ink: #e8eef8;
+  --muted: #93a0b8;
+  --background: #070b14;
+  --foreground: #e8eef8;
+  --panel: rgba(15, 23, 42, 0.78);
+  --line: rgba(148, 163, 184, 0.18);
 }
 
 @theme inline {
@@ -24,18 +20,19 @@
 }
 
 body {
-  background:
-    radial-gradient(1200px 400px at 10% -10%, rgba(37, 80, 151, 0.08), transparent 50%),
-    radial-gradient(900px 300px at 100% 0%, rgba(206, 32, 42, 0.06), transparent 45%),
-    var(--background);
   color: var(--foreground);
   font-family: var(--font-lato), "Lato", sans-serif;
+  background-color: #070b14;
+  background-image:
+    radial-gradient(900px 420px at 8% -10%, rgba(206, 32, 42, 0.22), transparent 55%),
+    radial-gradient(800px 380px at 92% 0%, rgba(37, 99, 235, 0.2), transparent 50%),
+    radial-gradient(700px 500px at 50% 110%, rgba(45, 212, 191, 0.08), transparent 45%),
+    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: auto, auto, auto, 48px 48px, 48px 48px;
+  min-height: 100%;
 }
 
 a {
-  color: var(--nsc-red);
-}
-
-a:hover {
-  color: var(--nsc-red-dark);
+  color: inherit;
 }
