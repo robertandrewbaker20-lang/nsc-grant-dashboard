@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 
 function navClass(active: boolean) {
   return [
-    "px-4 py-[15px] text-[13px] font-bold uppercase tracking-[0.08em] no-underline transition-colors",
+    "relative px-4 py-[15px] text-[13px] font-bold uppercase tracking-[0.08em] no-underline transition-colors",
     active
-      ? "bg-[#eeeeee] text-nsc-red"
-      : "text-[#7b7676] hover:bg-[#eeeeee] hover:text-nsc-red",
+      ? "bg-[#eeeeee] text-[#ce202a] shadow-[inset_0_-3px_0_0_#ce202a]"
+      : "text-[#7b7676] hover:bg-[#eeeeee] hover:text-[#ce202a]",
   ].join(" ");
 }
 
@@ -19,7 +19,7 @@ export function AppHeader() {
   const onParameters = pathname.startsWith("/parameters");
 
   return (
-    <header className="sticky top-0 z-30">
+    <header className="sticky top-0 z-30 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
       <div className="bg-nsc-red text-white">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 px-4 py-[7px] text-[13px] sm:px-6">
           <p className="min-w-0 truncate">
