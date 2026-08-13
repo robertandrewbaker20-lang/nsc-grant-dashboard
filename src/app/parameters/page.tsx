@@ -9,7 +9,7 @@ export default async function ParametersPage() {
   return (
     <div className="min-h-screen">
       <AppHeader active="parameters" />
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <ParametersForm initialProfile={profile} />
       </main>
     </div>

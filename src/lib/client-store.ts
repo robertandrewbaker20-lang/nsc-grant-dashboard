@@ -1,4 +1,16 @@
-import type { SearchProfile, SearchResult } from "./types";
+import type { Opportunity, SearchProfile, SearchResult } from "./types";
+import { blankDetails } from "./types";
+
+function normalizeOpportunity(item: Opportunity): Opportunity {
+  return {
+    ...blankDetails(),
+    ...item,
+    requirements: item.requirements ?? [],
+    nextSteps: item.nextSteps ?? [],
+    strengths: item.strengths ?? [],
+    concerns: item.concerns ?? [],
+  };
+}
 
 const PROFILE_KEY = "nsc-search-profile";
 const RESULT_KEY = "nsc-search-result";
@@ -24,7 +36,11 @@ export function readStoredResult(): SearchResult | null {
   try {
     const raw = window.sessionStorage.getItem(RESULT_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as SearchResult;
+    const parsed = JSON.parse(raw) as SearchResult;
+    return {
+      ...parsed,
+      opportunities: (parsed.opportunities ?? []).map(normalizeOpportunity),
+    };
   } catch {
     return null;
   }

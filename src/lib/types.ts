@@ -36,6 +36,18 @@ export interface Opportunity {
   strengths: string[];
   concerns: string[];
   partnershipRequired: boolean;
+  overview: string | null;
+  requirements: string[];
+  eligibility: string | null;
+  amount: string | null;
+  howToApply: string | null;
+  pocName: string | null;
+  pocEmail: string | null;
+  pocPhone: string | null;
+  matchRequired: string | null;
+  nextSteps: string[];
+  timeline: string | null;
+  enriched?: boolean;
 }
 
 export interface SearchResult {
@@ -44,4 +56,35 @@ export interface SearchResult {
   errors: string[];
   opportunities: Opportunity[];
   searchedAt: string;
+}
+
+export function blankDetails(): Pick<
+  Opportunity,
+  | "overview"
+  | "requirements"
+  | "eligibility"
+  | "amount"
+  | "howToApply"
+  | "pocName"
+  | "pocEmail"
+  | "pocPhone"
+  | "matchRequired"
+  | "nextSteps"
+  | "timeline"
+  | "enriched"
+> {
+  return {
+    overview: null,
+    requirements: [],
+    eligibility: null,
+    amount: null,
+    howToApply: null,
+    pocName: null,
+    pocEmail: null,
+    pocPhone: null,
+    matchRequired: null,
+    nextSteps: [],
+    timeline: null,
+    enriched: false,
+  };
 }

@@ -23,6 +23,32 @@ function textToList(value: string) {
     .filter(Boolean);
 }
 
+function Field({
+  label,
+  value,
+  onChange,
+  rows = 6,
+  wide = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  rows?: number;
+  wide?: boolean;
+}) {
+  return (
+    <label className={`block text-sm font-bold text-[#1c2430] ${wide ? "md:col-span-2" : ""}`}>
+      {label}
+      <textarea
+        rows={rows}
+        className="mt-1.5 w-full rounded-lg border border-[#d5deea] bg-[#f7f9fc] p-3 font-normal text-sm leading-relaxed outline-none focus:border-[#68acfb] focus:bg-white"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+  );
+}
+
 export function ParametersForm({
   initialProfile,
 }: {
@@ -66,10 +92,10 @@ export function ParametersForm({
         body: JSON.stringify({ profile: next }),
       });
       if (!res.ok) {
-        setStatus("Saved in this browser. Return to Results and run a search.");
+        setStatus("Saved in this browser. Return to Portfolio and run a search.");
         return;
       }
-      setStatus("Search parameters saved. Return to Results and run a search.");
+      setStatus("Search parameters saved. Return to Portfolio and run a search.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Save failed");
     } finally {
@@ -90,110 +116,85 @@ export function ParametersForm({
   }
 
   return (
-    <section className="rounded-lg border border-[#68acfb] bg-white p-5 shadow-sm">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+    <section className="rounded-2xl border border-[#d5deea] bg-white p-6 shadow-sm">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-[#255097]">Search parameters</h2>
-          <p className="text-sm text-slate-600">
-            These keywords, focus areas, and funder types drive Grants.gov and xAI
-            search. Save here, then run the search from Results.
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#255097]">
+            Search thesis
+          </p>
+          <h2 className="mt-1 text-xl font-black">What the council is seeking</h2>
+          <p className="mt-1 max-w-2xl text-sm text-[#5c6776]">
+            These fields drive Grants.gov and xAI search. Save, then run a search from
+            Portfolio.
           </p>
         </div>
         <button
           type="button"
           onClick={saveCriteria}
           disabled={saving}
-          className="rounded bg-[#ce202a] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+          className="rounded-md bg-[#ce202a] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? "Saving…" : "Save parameters"}
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="block text-sm font-bold">
-          Keywords (one per line)
-          <textarea
-            className="mt-1 h-32 w-full rounded border border-slate-300 p-2 font-normal"
-            value={keywordsText}
-            onChange={(e) => setKeywordsText(e.target.value)}
-          />
-        </label>
-        <label className="block text-sm font-bold">
-          Focus areas
-          <textarea
-            className="mt-1 h-32 w-full rounded border border-slate-300 p-2 font-normal"
-            value={focusText}
-            onChange={(e) => setFocusText(e.target.value)}
-          />
-        </label>
-        <label className="block text-sm font-bold">
-          Geography
-          <textarea
-            className="mt-1 h-24 w-full rounded border border-slate-300 p-2 font-normal"
-            value={profile.geography}
-            onChange={(e) =>
-              setProfile((p) => ({ ...p, geography: e.target.value }))
-            }
-          />
-        </label>
-        <label className="block text-sm font-bold">
-          Agencies and portals to prefer
-          <textarea
-            className="mt-1 h-24 w-full rounded border border-slate-300 p-2 font-normal"
-            value={agenciesText}
-            onChange={(e) => setAgenciesText(e.target.value)}
-          />
-        </label>
-        <label className="block text-sm font-bold md:col-span-2">
-          Looking for
-          <textarea
-            className="mt-1 h-24 w-full rounded border border-slate-300 p-2 font-normal"
-            value={profile.lookingFor}
-            onChange={(e) =>
-              setProfile((p) => ({ ...p, lookingFor: e.target.value }))
-            }
-          />
-        </label>
-        <label className="block text-sm font-bold">
-          Match criteria
-          <textarea
-            className="mt-1 h-24 w-full rounded border border-slate-300 p-2 font-normal"
-            value={profile.matchCriteria}
-            onChange={(e) =>
-              setProfile((p) => ({ ...p, matchCriteria: e.target.value }))
-            }
-          />
-        </label>
-        <label className="block text-sm font-bold">
-          Poor fit
-          <textarea
-            className="mt-1 h-24 w-full rounded border border-slate-300 p-2 font-normal"
-            value={profile.poorFit}
-            onChange={(e) =>
-              setProfile((p) => ({ ...p, poorFit: e.target.value }))
-            }
-          />
-        </label>
+      <div className="grid gap-5 md:grid-cols-2">
+        <Field label="Keywords (one per line)" value={keywordsText} onChange={setKeywordsText} />
+        <Field label="Focus areas" value={focusText} onChange={setFocusText} />
+        <Field
+          label="Geography"
+          value={profile.geography}
+          rows={5}
+          onChange={(geography) => setProfile((p) => ({ ...p, geography }))}
+        />
+        <Field
+          label="Agencies and portals"
+          value={agenciesText}
+          rows={5}
+          onChange={setAgenciesText}
+        />
+        <Field
+          label="Looking for"
+          value={profile.lookingFor}
+          rows={5}
+          wide
+          onChange={(lookingFor) => setProfile((p) => ({ ...p, lookingFor }))}
+        />
+        <Field
+          label="Match criteria"
+          value={profile.matchCriteria}
+          rows={5}
+          onChange={(matchCriteria) => setProfile((p) => ({ ...p, matchCriteria }))}
+        />
+        <Field
+          label="Poor fit"
+          value={profile.poorFit}
+          rows={5}
+          onChange={(poorFit) => setProfile((p) => ({ ...p, poorFit }))}
+        />
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {FUNDER_OPTIONS.map((type) => {
-          const on = profile.funderTypes.includes(type);
-          return (
-            <button
-              key={type}
-              type="button"
-              onClick={() => toggleFunder(type)}
-              className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
-                on ? "bg-[#255097] text-white" : "bg-slate-200 text-slate-600"
-              }`}
-            >
-              {type}
-            </button>
-          );
-        })}
+      <div className="mt-5">
+        <p className="mb-2 text-sm font-bold">Funder types</p>
+        <div className="flex flex-wrap gap-2">
+          {FUNDER_OPTIONS.map((type) => {
+            const on = profile.funderTypes.includes(type);
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => toggleFunder(type)}
+                className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
+                  on ? "bg-[#255097] text-white" : "bg-[#eef2f7] text-[#5c6776]"
+                }`}
+              >
+                {type}
+              </button>
+            );
+          })}
+        </div>
       </div>
-      {status && <p className="mt-3 text-sm text-slate-700">{status}</p>}
+      {status && <p className="mt-4 text-sm text-[#255097]">{status}</p>}
     </section>
   );
 }

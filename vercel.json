@@ -3,6 +3,9 @@
   "functions": {
     "src/app/api/search/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/opportunity/route.ts": {
+      "maxDuration": 120
     }
   }
 }

@@ -1,4 +1,5 @@
 import type { Opportunity, Recommendation, SearchProfile } from "./types";
+import { blankDetails } from "./types";
 import { profileToPrompt } from "./profile";
 
 const XAI_URL = "https://api.x.ai/v1/responses";
@@ -64,6 +65,36 @@ function parseJsonArray(text: string): unknown[] {
   }
 }
 
+function parseJsonObject(text: string): Record<string, unknown> | null {
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  try {
+    const parsed = JSON.parse(match[0]) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function asStringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.map(String).filter(Boolean) : [];
+}
+
+function asText(value: unknown): string | null {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text && text !== "null" ? text : null;
+}
+
+function funderFrom(value: unknown): Opportunity["funderType"] {
+  const funderType = String(value ?? "foundation");
+  return ["federal", "state", "foundation", "corporate", "civic"].includes(funderType)
+    ? (funderType as Opportunity["funderType"])
+    : "other";
+}
+
 export async function searchWebOpportunities(
   profile: SearchProfile,
 ): Promise<{ opportunities: Opportunity[]; errors: string[] }> {
@@ -75,14 +106,16 @@ ${profileToPrompt(profile)}
 
 Search official sources: Grants.gov, USDA RD, EPA EE, OJJDP, AmeriCorps, Arkansas Community Foundation, Walton Family Foundation, Winthrop Rockefeller Foundation, Entergy, Tyson, Walmart.org, ADPT outdoor grants, AGFC wildlife education, Hearst Foundations, REI Cooperative Action Fund.
 
-Return ONLY a JSON array (max 18 items):
+Return ONLY a JSON array (max 16 items):
 [{
   "title": "",
   "agency": "",
   "url": "",
-  "deadline": "YYYY-MM-DD or null",
+  "deadline": "YYYY-MM-DD or rolling",
   "funderType": "federal|state|foundation|corporate|civic",
   "description": "1-2 sentences",
+  "amount": "typical award range or unknown",
+  "eligibility": "who can apply",
   "partnershipRequired": false
 }]
 
@@ -97,27 +130,25 @@ Prefer real, named programs with real URLs. Skip generic advice.`;
       const r = row as Record<string, unknown>;
       const title = String(r.title ?? "").trim();
       if (!title) return;
-      const funderType = String(r.funderType ?? "foundation");
       opportunities.push({
         id: `xai:${index}:${title.slice(0, 40)}`,
         source: "xAI web search",
         title,
-        agency: r.agency ? String(r.agency) : null,
-        description: r.description ? String(r.description) : null,
-        url: r.url ? String(r.url) : null,
+        agency: asText(r.agency),
+        description: asText(r.description),
+        url: asText(r.url),
         postedDate: null,
-        deadline: r.deadline ? String(r.deadline) : null,
-        funderType: ["federal", "state", "foundation", "corporate", "civic"].includes(
-          funderType,
-        )
-          ? (funderType as Opportunity["funderType"])
-          : "other",
+        deadline: asText(r.deadline),
+        funderType: funderFrom(r.funderType),
         fitScore: null,
         recommendation: null,
         summary: null,
         strengths: [],
         concerns: [],
         partnershipRequired: Boolean(r.partnershipRequired),
+        ...blankDetails(),
+        amount: asText(r.amount),
+        eligibility: asText(r.eligibility),
       });
     });
 
@@ -151,6 +182,8 @@ ${JSON.stringify(
       description: o.description,
       deadline: o.deadline,
       funderType: o.funderType,
+      amount: o.amount,
+      eligibility: o.eligibility,
     })),
   )}
 
@@ -159,7 +192,18 @@ Return ONLY a JSON array:
   "id": "",
   "fitScore": 0,
   "recommendation": "pursue|review|pass",
-  "summary": "2 sentences",
+  "summary": "2 sentences on council fit",
+  "overview": "3-4 sentence program overview",
+  "amount": "award size if known",
+  "eligibility": "who may apply",
+  "requirements": ["key requirement"],
+  "howToApply": "application path in 1-3 sentences",
+  "matchRequired": "none / percent / unknown",
+  "timeline": "deadline or cycle",
+  "pocName": "contact if known else null",
+  "pocEmail": null,
+  "pocPhone": null,
+  "nextSteps": ["first action for council staff"],
   "strengths": ["..."],
   "concerns": ["..."],
   "partnershipRequired": false
@@ -185,10 +229,92 @@ Return ONLY a JSON array:
       ...item,
       fitScore: Math.min(100, Math.max(0, Number(ev.fitScore ?? 50))),
       recommendation,
-      summary: ev.summary ? String(ev.summary) : item.summary,
-      strengths: Array.isArray(ev.strengths) ? ev.strengths.map(String) : [],
-      concerns: Array.isArray(ev.concerns) ? ev.concerns.map(String) : [],
+      summary: asText(ev.summary) ?? item.summary,
+      strengths: asStringList(ev.strengths),
+      concerns: asStringList(ev.concerns),
       partnershipRequired: Boolean(ev.partnershipRequired) || item.partnershipRequired,
+      overview: asText(ev.overview) ?? item.overview,
+      requirements: asStringList(ev.requirements),
+      eligibility: asText(ev.eligibility) ?? item.eligibility,
+      amount: asText(ev.amount) ?? item.amount,
+      howToApply: asText(ev.howToApply) ?? item.howToApply,
+      pocName: asText(ev.pocName),
+      pocEmail: asText(ev.pocEmail),
+      pocPhone: asText(ev.pocPhone),
+      matchRequired: asText(ev.matchRequired),
+      nextSteps: asStringList(ev.nextSteps),
+      timeline: asText(ev.timeline) ?? item.deadline,
     };
   });
+}
+
+export async function enrichOpportunity(
+  profile: SearchProfile,
+  item: Opportunity,
+): Promise<Opportunity> {
+  const prompt = `Research this funding opportunity and write a briefing for ${profile.orgName}, a Scouting America council in Arkansas.
+
+${profileToPrompt(profile)}
+
+Opportunity:
+${JSON.stringify({
+    title: item.title,
+    agency: item.agency,
+    url: item.url,
+    source: item.source,
+    description: item.description,
+    deadline: item.deadline,
+    funderType: item.funderType,
+  })}
+
+Browse the official listing if a URL is present. Return ONLY JSON:
+{
+  "overview": "4-6 sentence overview",
+  "amount": "award range or typical gift",
+  "eligibility": "who can apply, 501(c)(3) notes",
+  "requirements": ["specific requirements"],
+  "howToApply": "steps, portal, LOI vs full proposal",
+  "matchRequired": "cash/in-kind/none/unknown",
+  "timeline": "deadlines and cycles",
+  "pocName": "named contact or office",
+  "pocEmail": "email or null",
+  "pocPhone": "phone or null",
+  "nextSteps": ["3 concrete staff actions"],
+  "summary": "council-specific fit",
+  "strengths": ["..."],
+  "concerns": ["..."],
+  "partnershipRequired": false
+}
+
+If a fact is unknown, say so — do not invent a person or email.`;
+
+  const text = await xaiResponses(prompt, true);
+  const ev = parseJsonObject(text);
+  if (!ev) return { ...item, enriched: true };
+
+  return {
+    ...item,
+    enriched: true,
+    overview: asText(ev.overview) ?? item.overview,
+    amount: asText(ev.amount) ?? item.amount,
+    eligibility: asText(ev.eligibility) ?? item.eligibility,
+    requirements: asStringList(ev.requirements).length
+      ? asStringList(ev.requirements)
+      : item.requirements,
+    howToApply: asText(ev.howToApply) ?? item.howToApply,
+    matchRequired: asText(ev.matchRequired) ?? item.matchRequired,
+    timeline: asText(ev.timeline) ?? item.timeline,
+    pocName: asText(ev.pocName) ?? item.pocName,
+    pocEmail: asText(ev.pocEmail) ?? item.pocEmail,
+    pocPhone: asText(ev.pocPhone) ?? item.pocPhone,
+    nextSteps: asStringList(ev.nextSteps).length
+      ? asStringList(ev.nextSteps)
+      : item.nextSteps,
+    summary: asText(ev.summary) ?? item.summary,
+    strengths: asStringList(ev.strengths).length
+      ? asStringList(ev.strengths)
+      : item.strengths,
+    concerns: asStringList(ev.concerns).length ? asStringList(ev.concerns) : item.concerns,
+    partnershipRequired: Boolean(ev.partnershipRequired) || item.partnershipRequired,
+  };
 }

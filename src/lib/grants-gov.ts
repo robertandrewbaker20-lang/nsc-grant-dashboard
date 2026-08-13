@@ -1,4 +1,5 @@
 import type { Opportunity } from "./types";
+import { blankDetails } from "./types";
 
 const GRANTS_GOV_SEARCH =
   "https://apply07.grants.gov/grantsws/rest/opportunities/search";
@@ -60,6 +61,7 @@ export async function fetchGrantsGov(
           strengths: [],
           concerns: [],
           partnershipRequired: false,
+          ...blankDetails(),
         });
       }
     } catch (error) {
