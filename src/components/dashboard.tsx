@@ -10,6 +10,7 @@ import {
   writeStoredResult,
 } from "@/lib/client-store";
 import { formatDeadline, hostFromUrl } from "@/lib/format";
+import { readResponseJson } from "@/lib/read-json";
 import { WATCHLIST } from "@/lib/watchlist";
 import type {
   Opportunity,
@@ -109,6 +110,20 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
     });
   }
 
+  async function postSearch(body: Record<string, unknown>) {
+    const res = await fetch("/api/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+    const data = await readResponseJson<SearchResult>(res);
+    if (!Array.isArray(data.opportunities)) {
+      throw new Error(data.errors?.[0] || "Search failed");
+    }
+    return data;
+  }
+
   async function runSearch() {
     setRunning(true);
     setStatus(null);
@@ -116,15 +131,37 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
     setSelectedId(null);
     try {
       const active = profile;
-      const res = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile: active }),
-      });
-      const data = (await res.json()) as SearchResult;
-      persist(data);
-      setStatus(`Scan complete · ${data.fetched} listings scored ${data.evaluated}`);
-      setNotes(publicNotes(data.errors));
+      setStatus("Scanning Grants.gov…");
+      const federal = await postSearch({ profile: active, mode: "federal" });
+      persist(federal);
+      setStatus(
+        federal.fetched
+          ? `Found ${federal.fetched} federal listings. Scanning foundations and scoring…`
+          : "No federal listings yet. Scanning foundations…",
+      );
+      setNotes(publicNotes(federal.errors));
+
+      try {
+        const complete = await postSearch({
+          profile: active,
+          mode: "complete",
+          seed: federal.opportunities,
+        });
+        persist(complete);
+        setStatus(
+          `Scan complete · ${complete.fetched} listings scored ${complete.evaluated}`,
+        );
+        setNotes(publicNotes(complete.errors));
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "The full scan did not finish.";
+        if (federal.fetched) {
+          setStatus(`Showing ${federal.fetched} federal listings`);
+          setNotes((current) => [...current, `${message} Broader sources can be retried.`]);
+        } else {
+          throw error;
+        }
+      }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Search failed");
     } finally {
@@ -141,8 +178,11 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ opportunity: selected, profile: active }),
+        cache: "no-store",
       });
-      const data = (await res.json()) as { opportunity?: Opportunity; error?: string };
+      const data = await readResponseJson<{ opportunity?: Opportunity; error?: string }>(
+        res,
+      );
       if (!res.ok || !data.opportunity) {
         throw new Error(data.error || "Briefing failed");
       }

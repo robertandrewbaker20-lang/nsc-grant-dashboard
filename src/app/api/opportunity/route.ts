@@ -3,6 +3,7 @@ import { loadProfile } from "@/lib/profile";
 import type { Opportunity, SearchProfile } from "@/lib/types";
 import { enrichOpportunity } from "@/lib/xai";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 

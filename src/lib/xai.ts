@@ -11,7 +11,11 @@ function apiKey(): string {
   return key;
 }
 
-async function xaiResponses(input: string, useWebSearch: boolean): Promise<string> {
+async function xaiResponses(
+  input: string,
+  useWebSearch: boolean,
+  timeoutMs = 40_000,
+): Promise<string> {
   const body: Record<string, unknown> = {
     model: MODEL,
     input: [{ role: "user", content: input }],
@@ -28,20 +32,26 @@ async function xaiResponses(input: string, useWebSearch: boolean): Promise<strin
     },
     body: JSON.stringify(body),
     cache: "no-store",
+    signal: AbortSignal.timeout(timeoutMs),
   });
 
+  const text = await response.text();
   if (!response.ok) {
-    const text = await response.text();
     throw new Error(`xAI HTTP ${response.status}: ${text.slice(0, 400)}`);
   }
 
-  const data = (await response.json()) as {
+  let data: {
     output_text?: string;
     output?: Array<{
       type?: string;
       content?: Array<{ type?: string; text?: string }>;
     }>;
   };
+  try {
+    data = JSON.parse(text) as typeof data;
+  } catch {
+    throw new Error(`xAI returned a non-JSON response: ${text.slice(0, 200)}`);
+  }
 
   if (data.output_text?.trim()) return data.output_text;
 
@@ -97,6 +107,7 @@ function funderFrom(value: unknown): Opportunity["funderType"] {
 
 export async function searchWebOpportunities(
   profile: SearchProfile,
+  timeoutMs = 22_000,
 ): Promise<{ opportunities: Opportunity[]; errors: string[] }> {
   const errors: string[] = [];
   try {
@@ -123,7 +134,7 @@ Return ONLY a JSON array (max 16 items):
 
 Prefer real, named programs with real URLs. Skip generic advice.`;
 
-    const text = await xaiResponses(prompt, true);
+    const text = await xaiResponses(prompt, true, timeoutMs);
     const rows = parseJsonArray(text);
     const opportunities: Opportunity[] = [];
 
@@ -156,7 +167,12 @@ Prefer real, named programs with real URLs. Skip generic advice.`;
 
     return { opportunities, errors };
   } catch (error) {
-    errors.push(error instanceof Error ? error.message : "xAI search failed");
+    const message = error instanceof Error ? error.message : "xAI search failed";
+    errors.push(
+      /abort|timeout/i.test(message)
+        ? "Foundation web search timed out."
+        : message,
+    );
     return { opportunities: [], errors };
   }
 }
@@ -164,10 +180,11 @@ Prefer real, named programs with real URLs. Skip generic advice.`;
 export async function evaluateOpportunities(
   profile: SearchProfile,
   items: Opportunity[],
+  timeoutMs = 25_000,
 ): Promise<Opportunity[]> {
   if (items.length === 0) return items;
 
-  const batch = items.slice(0, 24);
+  const batch = items.slice(0, 16);
   const prompt = `You are a grant strategist for ${profile.orgName}, an Arkansas-only Scouting council.
 
 ${profileToPrompt(profile)}
@@ -214,7 +231,7 @@ Return ONLY a JSON array with one row per id:
   "partnershipRequired": false
 }]`;
 
-  const text = await xaiResponses(prompt, false);
+  const text = await xaiResponses(prompt, false, timeoutMs);
   const rows = parseJsonArray(text);
   const byId = new Map<string, Record<string, unknown>>();
   const byTitle = new Map<string, Record<string, unknown>>();
@@ -296,7 +313,7 @@ Browse the official listing if a URL is present. Return ONLY JSON:
 
 If a fact is unknown, say so — do not invent a person or email.`;
 
-  const text = await xaiResponses(prompt, true);
+  const text = await xaiResponses(prompt, true, 40_000);
   const ev = parseJsonObject(text);
   if (!ev) return { ...item, enriched: true };
 
