@@ -1,3 +1,4 @@
+import { isAbortError } from "./abort";
 import type { Opportunity } from "./types";
 import { blankDetails } from "./types";
 
@@ -24,6 +25,32 @@ async function parseJsonBody(response: Response): Promise<{ oppHits?: GrantsGovH
   }
 }
 
+async function searchKeyword(keyword: string): Promise<{
+  keyword: string;
+  error: string | null;
+  hits: GrantsGovHit[];
+}> {
+  const response = await fetch(GRANTS_GOV_SEARCH, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      keyword,
+      rows: 8,
+      startRecordNum: 0,
+      oppStatuses: "posted|forecasted",
+    }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!response.ok) {
+    return { keyword, error: `HTTP ${response.status}`, hits: [] };
+  }
+
+  const data = await parseJsonBody(response);
+  return { keyword, error: null, hits: data.oppHits ?? [] };
+}
+
 export async function fetchGrantsGov(
   keywords: string[],
 ): Promise<{ opportunities: Opportunity[]; errors: string[] }> {
@@ -39,26 +66,19 @@ export async function fetchGrantsGov(
   const results = await Promise.all(
     uniqueKeywords.map(async (keyword) => {
       try {
-        const response = await fetch(GRANTS_GOV_SEARCH, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({
-            keyword,
-            rows: 8,
-            startRecordNum: 0,
-            oppStatuses: "posted|forecasted",
-          }),
-          cache: "no-store",
-          signal: AbortSignal.timeout(8_000),
-        });
-
-        if (!response.ok) {
-          return { keyword, error: `HTTP ${response.status}`, hits: [] as GrantsGovHit[] };
-        }
-
-        const data = await parseJsonBody(response);
-        return { keyword, error: null, hits: data.oppHits ?? [] };
+        return await searchKeyword(keyword);
       } catch (error) {
+        if (isAbortError(error)) {
+          try {
+            return await searchKeyword(keyword);
+          } catch (retryError) {
+            return {
+              keyword,
+              error: isAbortError(retryError) ? null : String(retryError),
+              hits: [] as GrantsGovHit[],
+            };
+          }
+        }
         return {
           keyword,
           error: error instanceof Error ? error.message : "failed",

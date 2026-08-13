@@ -129,6 +129,7 @@ export function publicNotes(errors: string[]) {
   return errors.filter(
     (note) =>
       !/^(hid |removed |filtered )/i.test(note) &&
-      !/wright-?patterson|starbase/i.test(note),
+      !/wright-?patterson|starbase/i.test(note) &&
+      !/abort|timed out|timeout/i.test(note),
   );
 }

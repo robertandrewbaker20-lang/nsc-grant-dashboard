@@ -1,3 +1,4 @@
+import { isAbortError } from "./abort";
 import type { Opportunity, Recommendation, SearchProfile } from "./types";
 import { blankDetails } from "./types";
 import { profileToPrompt } from "./profile";
@@ -14,7 +15,7 @@ function apiKey(): string {
 async function xaiResponses(
   input: string,
   useWebSearch: boolean,
-  timeoutMs = 40_000,
+  timeoutMs = 120_000,
 ): Promise<string> {
   const body: Record<string, unknown> = {
     model: MODEL,
@@ -107,17 +108,21 @@ function funderFrom(value: unknown): Opportunity["funderType"] {
 
 export async function searchWebOpportunities(
   profile: SearchProfile,
-  timeoutMs = 22_000,
+  timeoutMs = 120_000,
 ): Promise<{ opportunities: Opportunity[]; errors: string[] }> {
   const errors: string[] = [];
   try {
     const prompt = `Find currently open or recurring grants, foundations, corporate giving, and state programs that could fund this organization.
 
-${profileToPrompt(profile)}
+Organization: ${profile.orgName}
+Geography: ${profile.geography}
+Focus: ${profile.focusAreas.slice(0, 6).join("; ")}
+Keywords: ${profile.keywords.slice(0, 10).join(", ")}
+Looking for: ${profile.lookingFor}
 
 Search official sources: Grants.gov, USDA RD, EPA EE, OJJDP, AmeriCorps, Arkansas Community Foundation, Walton Family Foundation, Winthrop Rockefeller Foundation, Entergy, Tyson, Walmart.org, ADPT outdoor grants, AGFC wildlife education, Hearst Foundations, REI Cooperative Action Fund.
 
-Do NOT include awards that an Arkansas council cannot enter: other-state-only programs, or site-specific vehicles (Wright-Patterson AFB STARBASE, a single Ohio installation, any named base outside Arkansas). Nationwide programs the council can apply to from Arkansas are fine.
+Do not include other-state-only or single-site awards outside Arkansas. Nationwide programs the council can enter from Arkansas are fine.
 
 Return ONLY a JSON array (max 16 items):
 [{
@@ -167,12 +172,11 @@ Prefer real, named programs with real URLs. Skip generic advice.`;
 
     return { opportunities, errors };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "xAI search failed";
-    errors.push(
-      /abort|timeout/i.test(message)
-        ? "Foundation web search timed out."
-        : message,
-    );
+    if (isAbortError(error)) {
+      errors.push("Foundation web search did not finish in time.");
+    } else {
+      errors.push(error instanceof Error ? error.message : "xAI search failed");
+    }
     return { opportunities: [], errors };
   }
 }
@@ -180,7 +184,7 @@ Prefer real, named programs with real URLs. Skip generic advice.`;
 export async function evaluateOpportunities(
   profile: SearchProfile,
   items: Opportunity[],
-  timeoutMs = 25_000,
+  timeoutMs = 90_000,
 ): Promise<Opportunity[]> {
   if (items.length === 0) return items;
 
@@ -313,7 +317,7 @@ Browse the official listing if a URL is present. Return ONLY JSON:
 
 If a fact is unknown, say so — do not invent a person or email.`;
 
-  const text = await xaiResponses(prompt, true, 40_000);
+  const text = await xaiResponses(prompt, true, 90_000);
   const ev = parseJsonObject(text);
   if (!ev) return { ...item, enriched: true };
 
