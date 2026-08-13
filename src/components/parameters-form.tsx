@@ -37,11 +37,11 @@ function Field({
   wide?: boolean;
 }) {
   return (
-    <label className={`block text-sm font-bold text-[#383636] ${wide ? "md:col-span-2" : ""}`}>
+    <label className={`block text-sm font-black text-black ${wide ? "md:col-span-2" : ""}`}>
       {label}
       <textarea
         rows={rows}
-        className="mt-1.5 w-full rounded-xl border border-[#afd4ff] bg-white p-3 font-normal text-sm leading-relaxed text-[#383636] outline-none focus:border-[#255097]"
+        className="mt-1.5 w-full rounded-xl border-2 border-black/25 bg-[#ce202a] p-3 font-normal text-sm leading-relaxed text-black placeholder:text-black/70 outline-none focus:border-black"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -67,8 +67,12 @@ export function ParametersForm({
     setProfile(stored);
     setKeywordsText(listToText(stored.keywords));
     setFocusText(listToText(stored.focusAreas));
-    setAgenciesText(listToText(stored.agencies));
+    setAgenciesText(listToListSafe(stored.agencies));
   }, []);
+
+  function listToListSafe(items: string[]) {
+    return listToText(items);
+  }
 
   function currentProfile(): SearchProfile {
     return {
@@ -112,23 +116,23 @@ export function ParametersForm({
   }
 
   return (
-    <section className="rounded-2xl border border-[#68acfb]/50 bg-white/85 p-6 backdrop-blur-xl">
+    <section className="rounded-2xl border-2 border-black bg-[#ce202a] p-6 text-black shadow-sm">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#255097]">
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black">
             Search thesis
           </p>
-          <h2 className="mt-1 text-xl font-black text-[#383636]">What the council is seeking</h2>
-          <p className="mt-1 max-w-2xl text-sm text-[#5b6573]">
+          <h2 className="mt-1 text-xl font-black text-black">What the council is seeking</h2>
+          <p className="mt-1 max-w-2xl text-sm font-semibold text-black">
             These fields drive Grants.gov and xAI search. Save, then run a scan from
-            Portfolio.
+            Portfolio. Site-specific awards outside Arkansas are hidden automatically.
           </p>
         </div>
         <button
           type="button"
           onClick={saveCriteria}
           disabled={saving}
-          className="rounded-full bg-[#ce202a] px-5 py-2.5 text-sm font-black text-white disabled:opacity-50"
+          className="rounded-full border-2 border-black bg-black px-5 py-2.5 text-sm font-black text-[#ce202a] disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save parameters"}
         </button>
@@ -163,7 +167,7 @@ export function ParametersForm({
           onChange={(matchCriteria) => setProfile((p) => ({ ...p, matchCriteria }))}
         />
         <Field
-          label="Poor fit"
+          label="Poor fit — hidden from Portfolio"
           value={profile.poorFit}
           rows={5}
           onChange={(poorFit) => setProfile((p) => ({ ...p, poorFit }))}
@@ -171,7 +175,7 @@ export function ParametersForm({
       </div>
 
       <div className="mt-5">
-        <p className="mb-2 text-sm font-bold text-[#383636]">Funder types</p>
+        <p className="mb-2 text-sm font-black text-black">Funder types</p>
         <div className="flex flex-wrap gap-2">
           {FUNDER_OPTIONS.map((type) => {
             const on = profile.funderTypes.includes(type);
@@ -180,10 +184,10 @@ export function ParametersForm({
                 key={type}
                 type="button"
                 onClick={() => toggleFunder(type)}
-                className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
+                className={`rounded-full px-3 py-1 text-xs font-black uppercase ${
                   on
-                    ? "bg-[#255097] text-white"
-                    : "border border-[#255097]/25 text-[#255097]"
+                    ? "border-2 border-black bg-black text-[#ce202a]"
+                    : "border-2 border-black bg-[#ce202a] text-black"
                 }`}
               >
                 {type}
@@ -192,7 +196,7 @@ export function ParametersForm({
           })}
         </div>
       </div>
-      {status && <p className="mt-4 text-sm text-[#255097]">{status}</p>}
+      {status && <p className="mt-4 text-sm font-black text-black">{status}</p>}
     </section>
   );
 }

@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 export function AppHeader({ active }: { active: "results" | "parameters" }) {
-  const tab = "rounded-full px-4 py-1.5 text-sm font-bold no-underline transition";
-  const on = "bg-[#255097] text-white";
+  const tab = "rounded-full px-4 py-1.5 text-sm font-black no-underline transition";
+  const on = "bg-[#ce202a] text-black shadow-[0_0_0_2px_#ce202a]";
   const off =
-    "border border-[#255097]/20 bg-white text-[#255097] hover:bg-[#AFD4FF]/40";
+    "border-2 border-[#ce202a] bg-[#ce202a] text-black hover:brightness-95";
 
   return (
     <header className="sticky top-0 z-30 border-b-4 border-[#ce202a] bg-white/90 shadow-sm backdrop-blur-xl">
@@ -34,7 +34,7 @@ export function AppHeader({ active }: { active: "results" | "parameters" }) {
             href="https://www.naturalstatecouncil.org/"
             target="_blank"
             rel="noreferrer"
-            className="rounded-full border border-[#ce202a]/20 px-3 py-1.5 text-sm font-bold text-[#ce202a] no-underline hover:bg-[#ce202a]/5"
+            className="rounded-full border-2 border-[#ce202a] bg-[#ce202a] px-3 py-1.5 text-sm font-black text-black no-underline hover:brightness-95"
           >
             naturalstatecouncil.org
           </a>
