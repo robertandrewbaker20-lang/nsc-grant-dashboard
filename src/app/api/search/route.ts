@@ -26,17 +26,22 @@ export async function POST(request: Request) {
   let profile = await loadProfile();
   let mode = "complete";
   let seed: Opportunity[] = [];
+  let dismissed: string[] = [];
   try {
     const body = (await request.json()) as {
       profile?: SearchProfile;
       mode?: string;
       seed?: Opportunity[];
+      dismissed?: string[];
     };
     if (body?.profile) {
       profile = { ...profile, ...body.profile };
     }
     if (body?.mode) mode = body.mode;
     if (Array.isArray(body?.seed)) seed = body.seed;
+    if (Array.isArray(body?.dismissed)) {
+      dismissed = body.dismissed.filter((key) => typeof key === "string");
+    }
   } catch {
     // empty body uses saved profile
   }
@@ -44,12 +49,12 @@ export async function POST(request: Request) {
   try {
     const result =
       mode === "federal"
-        ? await runFederalSearch(profile)
+        ? await runFederalSearch(profile, dismissed)
         : mode === "sources"
-          ? await runSourceSearch(profile, seed)
+          ? await runSourceSearch(profile, seed, dismissed)
           : mode === "score"
-            ? await runScoreSearch(profile, seed)
-            : await runSearch(profile, seed);
+            ? await runScoreSearch(profile, seed, dismissed)
+            : await runSearch(profile, seed, dismissed);
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
