@@ -1,4 +1,5 @@
 import { isAbortError } from "./abort";
+import { filterEligibleOpportunities } from "./eligibility";
 import type { Opportunity } from "./types";
 import { blankDetails } from "./types";
 
@@ -116,5 +117,8 @@ export async function fetchGrantsGov(
     }
   }
 
-  return { opportunities, errors };
+  return {
+    opportunities: filterEligibleOpportunities(opportunities).kept,
+    errors,
+  };
 }

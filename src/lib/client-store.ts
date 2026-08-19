@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import defaults from "../../data/default-profile.json";
 import { filterEligibleOpportunities } from "./eligibility";
 import type { Opportunity, SearchProfile, SearchResult } from "./types";
 import { blankDetails } from "./types";
@@ -16,6 +17,29 @@ function normalizeOpportunity(item: Opportunity): Opportunity {
 
 const PROFILE_KEY = "nsc-search-profile";
 const RESULT_KEY = "nsc-search-result";
+
+const LEGACY_GEOGRAPHY =
+  "Arkansas statewide: Central Arkansas, Northwest Arkansas, River Valley, Arkansas Delta, Ozarks, Ouachitas. Rural and small-town communities plus Little Rock, Fayetteville/Bentonville, Fort Smith, Jonesboro, Pine Bluff, and El Dorado. Do not treat other states as eligible service area.";
+
+const LEGACY_POOR_FIT =
+  "Never return or score: site-specific awards at a named installation outside Arkansas; state-only programs for any state that is not Arkansas; awards that cannot fund Arkansas youth; adult-only workforce; pure biomedical research; invitation-only awards we cannot access; for-profit-only RFPs; and programs that require serving a population the council does not actually enroll.";
+
+const LEGACY_MATCH =
+  "Score highly when: 501(c)(3) can apply or partner; Arkansas or nationwide geography; youth development, outdoor/STEM, mentoring, or rural facilities; funds programs, scholarships, or camp infrastructure; reasonable reporting for a council staff team. Flag when a school, city, or university must be lead applicant. Nationwide competitions the council can enter from Arkansas count. Awards locked to another state or a single installation outside Arkansas do not.";
+
+function migrateProfile(profile: SearchProfile): SearchProfile {
+  const next = { ...profile };
+  if (next.geography.trim() === LEGACY_GEOGRAPHY) {
+    next.geography = defaults.geography;
+  }
+  if (next.poorFit.trim() === LEGACY_POOR_FIT) {
+    next.poorFit = defaults.poorFit;
+  }
+  if (next.matchCriteria.trim() === LEGACY_MATCH) {
+    next.matchCriteria = defaults.matchCriteria;
+  }
+  return next;
+}
 
 type Listener = () => void;
 
@@ -55,7 +79,7 @@ export function getProfileSnapshot(): SearchProfile | null {
     return null;
   }
   try {
-    profileCache = JSON.parse(raw) as SearchProfile;
+    profileCache = migrateProfile(JSON.parse(raw) as SearchProfile);
   } catch {
     profileCache = null;
   }

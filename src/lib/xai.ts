@@ -1,6 +1,7 @@
-import { blankDetails } from "./types";
+import { filterEligibleOpportunities } from "./eligibility";
 import { profileToPrompt } from "./profile";
 import type { Opportunity, Recommendation, SearchProfile } from "./types";
+import { blankDetails } from "./types";
 import { WATCHLIST } from "./watchlist";
 
 const XAI_URL = "https://api.x.ai/v1/responses";
@@ -126,7 +127,7 @@ Looking for: ${profile.lookingFor}
 Use this council source list when a named program fits:
 ${sources}
 
-Do not include other-state-only or single-site awards outside Arkansas. Nationwide programs the council can enter from Arkansas are fine.
+Do not include other-state-only or single-site awards outside Arkansas. Do not include U.S. Embassy, U.S. Mission, consulate, or PAS programs for any foreign country. Nationwide U.S. programs the council can enter from Arkansas are fine.
 
 Return ONLY a JSON array (max 16 items):
 [{
@@ -174,7 +175,7 @@ Prefer real, named programs with real URLs. Skip generic advice.`;
       });
     });
 
-    return { opportunities, errors: [] };
+    return { opportunities: filterEligibleOpportunities(opportunities).kept, errors: [] };
   } catch {
     return { opportunities: [], errors: [] };
   }
@@ -194,7 +195,7 @@ ${profileToPrompt(profile)}
 
 Score EACH opportunity 0-100. You MUST return one object for every id listed. Prefer precise language: youth from low-income households, Title I schools, rural and small-town youth, first-generation campers — not "disenfranchised."
 
-If the award is site-specific to another state or installation (Ohio, Wright-Patterson AFB, a single STARBASE site the council cannot enter), set fitScore to 0 and recommendation to pass.
+If the award is site-specific to another state or installation (Ohio, Wright-Patterson AFB, a single STARBASE site the council cannot enter), or is a U.S. Embassy / U.S. Mission / PAS / consulate program, or funds work in a foreign country, set fitScore to 0 and recommendation to pass. Do not send foreign-geography awards to review.
 
 Opportunities:
 ${JSON.stringify(
