@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import defaults from "../../data/default-profile.json";
+import { filterDismissed } from "./dismissed";
 import { filterEligibleOpportunities } from "./eligibility";
 import type { Opportunity, SearchProfile, SearchResult } from "./types";
 import { blankDetails } from "./types";
@@ -93,10 +94,11 @@ function parseResult(raw: string | null): SearchResult | null {
     const { kept } = filterEligibleOpportunities(
       (parsed.opportunities ?? []).map(normalizeOpportunity),
     );
+    const opportunities = filterDismissed(kept);
     return {
       ...parsed,
-      opportunities: kept,
-      fetched: kept.length,
+      opportunities,
+      fetched: opportunities.length,
       errors: publicNotes(parsed.errors ?? []),
     };
   } catch {
@@ -135,7 +137,7 @@ export function writeStoredResult(result: SearchResult) {
   const raw = JSON.stringify(result);
   window.sessionStorage.setItem(RESULT_KEY, raw);
   resultCacheRaw = raw;
-  resultCache = result;
+  resultCache = parseResult(raw);
   emit(resultListeners);
 }
 

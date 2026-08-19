@@ -12,6 +12,7 @@ import {
   useStoredResult,
   writeStoredResult,
 } from "@/lib/client-store";
+import { filterDismissed, getDismissedSnapshot, rememberDismissed } from "@/lib/dismissed";
 import { formatDeadline } from "@/lib/format";
 import { ensurePursuitStage } from "@/lib/pursuit";
 import { readResponseJson } from "@/lib/read-json";
@@ -79,8 +80,10 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
   }, [list]);
 
   function persist(next: SearchResult) {
-    setLocalResult(next);
-    writeStoredResult(next);
+    const opportunities = filterDismissed(next.opportunities);
+    const cleaned = { ...next, opportunities, fetched: opportunities.length };
+    setLocalResult(cleaned);
+    writeStoredResult(cleaned);
   }
 
   function moveTo(id: string, recommendation: Recommendation) {
@@ -97,11 +100,32 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
     }
   }
 
+  function clearPassed() {
+    if (!result) return;
+    const passed = byLane.pass;
+    if (passed.length === 0) return;
+    const label = passed.length === 1 ? "opportunity" : "opportunities";
+    if (
+      !window.confirm(
+        `Remove ${passed.length} passed ${label} from the board? They will not appear in future scans.`,
+      )
+    ) {
+      return;
+    }
+    rememberDismissed(passed);
+    const passedIds = new Set(passed.map((item) => item.id));
+    persist({
+      ...result,
+      opportunities: result.opportunities.filter((item) => !passedIds.has(item.id)),
+    });
+    if (selectedId && passedIds.has(selectedId)) setSelectedId(null);
+  }
+
   async function postSearch(body: Record<string, unknown>) {
     const res = await fetch("/api/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, dismissed: getDismissedSnapshot() }),
       cache: "no-store",
     });
     const data = await readResponseJson<SearchResult>(res);
@@ -306,15 +330,23 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
         <div className="grid gap-4 md:grid-cols-3">
           {LANES.map((lane) => (
             <div key={lane.id} className="flex min-w-0 flex-col gap-2">
-              {byLane.pursue.length > 0 && (
+              {(byLane.pursue.length > 0 || byLane.pass.length > 0) && (
                 <div className="flex min-h-10 items-stretch">
-                  {lane.id === "pursue" ? (
+                  {lane.id === "pursue" && byLane.pursue.length > 0 ? (
                     <Link
                       href="/pursue"
                       className="flex w-full items-center justify-center rounded-md bg-nsc-navy-link px-3 py-2 text-center font-display text-xs font-bold uppercase tracking-wide text-white no-underline shadow-sm transition-colors hover:bg-[#014274]"
                     >
                       Open pursuit board
                     </Link>
+                  ) : lane.id === "pass" && byLane.pass.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={clearPassed}
+                      className="flex w-full items-center justify-center rounded-md bg-[#6b7380] px-3 py-2 text-center font-display text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-colors hover:bg-[#5c636b]"
+                    >
+                      Clear passed
+                    </button>
                   ) : (
                     <div className="w-full" aria-hidden="true" />
                   )}

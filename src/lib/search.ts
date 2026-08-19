@@ -1,4 +1,5 @@
 import { isAbortError } from "./abort";
+import { filterDismissed } from "./dismissed";
 import { filterEligibleOpportunities } from "./eligibility";
 import { fetchGrantsGov } from "./grants-gov";
 import type { Opportunity, SearchProfile, SearchResult } from "./types";
@@ -17,6 +18,10 @@ function mergeOpportunities(lists: Opportunity[][]): Opportunity[] {
   return merged;
 }
 
+function keepVisible(items: Opportunity[], dismissed: string[]) {
+  return filterDismissed(filterEligibleOpportunities(items).kept, dismissed);
+}
+
 function toResult(
   opportunities: Opportunity[],
   errors: string[],
@@ -31,15 +36,18 @@ function toResult(
   };
 }
 
-export async function runFederalSearch(profile: SearchProfile): Promise<SearchResult> {
+export async function runFederalSearch(
+  profile: SearchProfile,
+  dismissed: string[] = [],
+): Promise<SearchResult> {
   const federal = await fetchGrantsGov(profile.keywords);
-  const { kept } = filterEligibleOpportunities(federal.opportunities);
-  return toResult(kept, federal.errors);
+  return toResult(keepVisible(federal.opportunities, dismissed), federal.errors);
 }
 
 export async function runSourceSearch(
   profile: SearchProfile,
   seed: Opportunity[] = [],
+  dismissed: string[] = [],
 ): Promise<SearchResult> {
   const errors: string[] = [];
   const federal =
@@ -49,12 +57,13 @@ export async function runSourceSearch(
   errors.push(...federal.errors);
 
   const extras = await searchWebOpportunities(profile, 45_000);
-  const { kept } = filterEligibleOpportunities(
+  const kept = keepVisible(
     mergeOpportunities([
       federal.opportunities,
       watchlistOpportunities(),
       extras.opportunities,
     ]),
+    dismissed,
   );
   return toResult(kept, errors);
 }
@@ -62,9 +71,10 @@ export async function runSourceSearch(
 export async function runScoreSearch(
   profile: SearchProfile,
   seed: Opportunity[],
+  dismissed: string[] = [],
 ): Promise<SearchResult> {
   const errors: string[] = [];
-  const eligible = filterEligibleOpportunities(seed).kept;
+  const eligible = keepVisible(seed, dismissed);
   let evaluated = eligible.slice(0, 16);
   let evaluatedCount = 0;
   try {
@@ -77,7 +87,7 @@ export async function runScoreSearch(
     evaluated = eligible.slice(0, 16);
   }
 
-  const scored = filterEligibleOpportunities([...evaluated, ...eligible.slice(16)]).kept;
+  const scored = keepVisible([...evaluated, ...eligible.slice(16)], dismissed);
   scored.sort((a, b) => (b.fitScore ?? 0) - (a.fitScore ?? 0));
   return toResult(scored, errors, evaluatedCount);
 }
@@ -85,7 +95,8 @@ export async function runScoreSearch(
 export async function runSearch(
   profile: SearchProfile,
   seed: Opportunity[] = [],
+  dismissed: string[] = [],
 ): Promise<SearchResult> {
-  const sources = await runSourceSearch(profile, seed);
-  return runScoreSearch(profile, sources.opportunities);
+  const sources = await runSourceSearch(profile, seed, dismissed);
+  return runScoreSearch(profile, sources.opportunities, dismissed);
 }
