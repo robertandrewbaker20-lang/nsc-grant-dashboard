@@ -64,7 +64,8 @@ export async function runScoreSearch(
   seed: Opportunity[],
 ): Promise<SearchResult> {
   const errors: string[] = [];
-  let evaluated = seed.slice(0, 16);
+  const eligible = filterEligibleOpportunities(seed).kept;
+  let evaluated = eligible.slice(0, 16);
   let evaluatedCount = 0;
   try {
     evaluated = await evaluateOpportunities(profile, evaluated, 60_000);
@@ -73,10 +74,10 @@ export async function runScoreSearch(
     if (!isAbortError(error)) {
       errors.push(error instanceof Error ? error.message : "Evaluation failed");
     }
-    evaluated = seed.slice(0, 16);
+    evaluated = eligible.slice(0, 16);
   }
 
-  const scored = filterEligibleOpportunities([...evaluated, ...seed.slice(16)]).kept;
+  const scored = filterEligibleOpportunities([...evaluated, ...eligible.slice(16)]).kept;
   scored.sort((a, b) => (b.fitScore ?? 0) - (a.fitScore ?? 0));
   return toResult(scored, errors, evaluatedCount);
 }
