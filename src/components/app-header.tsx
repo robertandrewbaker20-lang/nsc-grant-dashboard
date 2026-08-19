@@ -16,6 +16,7 @@ function navClass(active: boolean) {
 export function AppHeader() {
   const pathname = usePathname();
   const onPortfolio = pathname === "/";
+  const onPursue = pathname.startsWith("/pursue");
   const onParameters = pathname.startsWith("/parameters");
 
   return (
@@ -76,6 +77,13 @@ export function AppHeader() {
         <div className="mx-auto flex max-w-[1400px] px-2 sm:px-4">
           <Link href="/" className={navClass(onPortfolio)} aria-current={onPortfolio ? "page" : undefined}>
             Portfolio
+          </Link>
+          <Link
+            href="/pursue"
+            className={navClass(onPursue)}
+            aria-current={onPursue ? "page" : undefined}
+          >
+            Pursuit board
           </Link>
           <Link
             href="/parameters"

@@ -1,7 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo, useState } from "react";
+import { GrantCard } from "@/components/grant-card";
+import { KanbanColumn, KanbanEmpty } from "@/components/kanban-column";
 import { OpportunityDetail } from "@/components/opportunity-detail";
 import {
   publicNotes,
@@ -9,7 +12,8 @@ import {
   useStoredResult,
   writeStoredResult,
 } from "@/lib/client-store";
-import { formatDeadline, hostFromUrl } from "@/lib/format";
+import { formatDeadline } from "@/lib/format";
+import { ensurePursuitStage } from "@/lib/pursuit";
 import { readResponseJson } from "@/lib/read-json";
 import { WATCHLIST } from "@/lib/watchlist";
 import type {
@@ -34,27 +38,6 @@ const EMPTY_LIST: Opportunity[] = [];
 
 function laneOf(item: Opportunity): Recommendation {
   return item.recommendation ?? "review";
-}
-
-function fitBadge(score: number | null) {
-  if (score == null) {
-    return { label: "Not scored", className: "bg-nav text-muted" };
-  }
-  if (score >= 75) {
-    return { label: `Fit ${score}`, className: "bg-[#e8f0e3] text-nsc-green" };
-  }
-  if (score >= 50) {
-    return { label: `Fit ${score}`, className: "bg-[#fbf3d4] text-[#8a6d0a]" };
-  }
-  return { label: `Fit ${score}`, className: "bg-[#fdecee] text-nsc-red-dark" };
-}
-
-function isSoon(deadline: string | null) {
-  if (!deadline) return false;
-  const date = new Date(deadline);
-  if (Number.isNaN(date.getTime())) return false;
-  const days = (date.getTime() - Date.now()) / 86_400_000;
-  return days >= 0 && days <= 21;
 }
 
 export function Dashboard({ initialProfile }: { initialProfile: SearchProfile }) {
@@ -102,12 +85,16 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
 
   function moveTo(id: string, recommendation: Recommendation) {
     if (!result) return;
+    const current = result.opportunities.find((item) => item.id === id);
     persist({
       ...result,
       opportunities: result.opportunities.map((item) =>
         item.id === id ? { ...item, recommendation } : item,
       ),
     });
+    if (recommendation === "pursue" && current) {
+      ensurePursuitStage(current);
+    }
   }
 
   async function postSearch(body: Record<string, unknown>) {
@@ -153,9 +140,7 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
           seed: federal.opportunities,
         });
         persist(sources);
-        setStatus(
-          `Found ${sources.fetched} listings. Scoring fit…`,
-        );
+        setStatus(`Found ${sources.fetched} listings. Scoring fit…`);
 
         try {
           const scored = await postSearch({
@@ -320,104 +305,60 @@ export function Dashboard({ initialProfile }: { initialProfile: SearchProfile })
       >
         <div className="grid gap-4 md:grid-cols-3">
           {LANES.map((lane) => (
-            <div
-              key={lane.id}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setOverLane(lane.id);
-              }}
-              onDragLeave={() => setOverLane((current) => (current === lane.id ? null : current))}
-              onDrop={(e) => {
-                e.preventDefault();
-                const id = e.dataTransfer.getData("text/plain") || draggingId;
-                if (id) moveTo(id, lane.id);
-                setDraggingId(null);
-                setOverLane(null);
-              }}
-              className={`nsc-card min-h-[420px] overflow-hidden transition-shadow ${
-                overLane === lane.id ? "ring-2 ring-nsc-navy/25" : ""
-              }`}
-            >
-              <div className={`h-1.5 ${lane.accent}`} />
-              <div className="p-3">
-                <div className="mb-3 flex items-end justify-between px-1">
-                  <div>
-                    <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-nsc-navy-deep">
-                      {lane.label}
-                    </h2>
-                    <p className="text-xs text-muted">{lane.hint}</p>
-                  </div>
-                  <span className="rounded-full bg-nsc-navy px-2 py-0.5 text-xs font-bold text-white">
-                    {byLane[lane.id].length}
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {byLane[lane.id].length === 0 && (
-                    <p className="rounded-lg border border-dashed border-line px-3 py-8 text-center text-xs text-muted">
-                      Drop a card here
-                    </p>
+            <div key={lane.id} className="flex min-w-0 flex-col gap-2">
+              {byLane.pursue.length > 0 && (
+                <div className="flex min-h-10 items-stretch">
+                  {lane.id === "pursue" ? (
+                    <Link
+                      href="/pursue"
+                      className="flex w-full items-center justify-center rounded-md bg-nsc-navy-link px-3 py-2 text-center font-display text-xs font-bold uppercase tracking-wide text-white no-underline shadow-sm transition-colors hover:bg-[#014274]"
+                    >
+                      Open pursuit board
+                    </Link>
+                  ) : (
+                    <div className="w-full" aria-hidden="true" />
                   )}
-                  {byLane[lane.id].map((row) => {
-                    const fit = fitBadge(row.fitScore);
-                    const soon = isSoon(row.deadline);
-                    return (
-                      <article
-                        key={row.id}
-                        draggable
-                        onDragStart={(e) => {
-                          setDraggingId(row.id);
-                          e.dataTransfer.setData("text/plain", row.id);
-                        }}
-                        onDragEnd={() => {
-                          setDraggingId(null);
-                          setOverLane(null);
-                        }}
-                        onClick={() =>
-                          setSelectedId(row.id === selectedId ? null : row.id)
-                        }
-                        className={`cursor-pointer rounded-lg border bg-white p-3 transition ${
-                          selectedId === row.id
-                            ? "border-nsc-navy-link shadow-sm ring-2 ring-nsc-sky/40"
-                            : "border-line hover:border-nsc-navy"
-                        }`}
-                      >
-                        <p className="text-sm font-bold leading-snug text-ink">{row.title}</p>
-                        <p className="mt-1 text-xs leading-snug text-muted">
-                          {row.agency ?? row.source}
-                        </p>
-                        <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                          <span className="rounded-full bg-nav px-2 py-0.5 text-[11px] font-semibold capitalize text-nsc-navy-deep">
-                            {row.funderType}
-                          </span>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                              soon ? "bg-[#fdecee] text-nsc-red-dark" : "bg-nav text-muted"
-                            }`}
-                          >
-                            {formatDeadline(row.deadline)}
-                          </span>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${fit.className}`}
-                          >
-                            {fit.label}
-                          </span>
-                        </div>
-                        {row.url && (
-                          <a
-                            href={row.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="mt-2 inline-block text-[11px] font-bold text-nsc-red no-underline hover:underline"
-                          >
-                            {hostFromUrl(row.url)}
-                          </a>
-                        )}
-                      </article>
-                    );
-                  })}
                 </div>
-              </div>
+              )}
+              <KanbanColumn
+                title={lane.label}
+                hint={lane.hint}
+                accent={lane.accent}
+                count={byLane[lane.id].length}
+                active={overLane === lane.id}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setOverLane(lane.id);
+                }}
+                onDragLeave={() =>
+                  setOverLane((current) => (current === lane.id ? null : current))
+                }
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const id = event.dataTransfer.getData("text/plain") || draggingId;
+                  if (id) moveTo(id, lane.id);
+                  setDraggingId(null);
+                  setOverLane(null);
+                }}
+              >
+                {byLane[lane.id].length === 0 && <KanbanEmpty />}
+                {byLane[lane.id].map((row) => (
+                  <GrantCard
+                    key={row.id}
+                    item={row}
+                    selected={selectedId === row.id}
+                    onSelect={() => setSelectedId(row.id === selectedId ? null : row.id)}
+                    onDragStart={(event) => {
+                      setDraggingId(row.id);
+                      event.dataTransfer.setData("text/plain", row.id);
+                    }}
+                    onDragEnd={() => {
+                      setDraggingId(null);
+                      setOverLane(null);
+                    }}
+                  />
+                ))}
+              </KanbanColumn>
             </div>
           ))}
         </div>
